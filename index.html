@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta name="viewport"
+content="width=390, height=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Altinho Heros</title>
+
+<style>
+html,body{
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  background:#111;
+  touch-action:none;
+}
+
+canvas {
+  display: block;
+  margin: 0 auto;
+
+  width: 390px;
+  height: 670px;
+
+  background-color: #000; /* fundo preto */
+  background-image: url("https://i.imgur.com/WRQN4bp.gif");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 384px 384px; /* mantém o tamanho original da imagem */
+
+  image-rendering: pixelated;
+}
+
+#ui{
+  position:absolute;
+  width:390px;
+  height:670px;
+  left:50%;
+  bottom:0;
+  transform:translateX(-50%);
+  pointer-events:none;
+}
+
+.btn{
+  position:absolute;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:center;
+  image-rendering:pixelated;
+  pointer-events:auto;
+
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+
+  touch-action: manipulation;
+}
+
+#left{
+  left:10px;
+  bottom:70px;
+  background-image:url("https://i.imgur.com/ohqY8nh.png");
+}
+
+#up{
+  left:40px;
+  bottom:100px;
+  background-image:url("https://i.imgur.com/6sNbro9.png");
+}
+
+#right{
+  left:70px;
+  bottom:70px;
+  background-image:url("https://i.imgur.com/IcDzfkP.png");
+}
+
+#down{
+  left:40px;
+  bottom:40px;
+  background-image:url("https://i.imgur.com/4etsi3I.png");
+}
+
+#jump{
+  right:20px;
+  bottom:70px;
+  width:44px;
+  height:44px;
+  background-image:url("https://i.imgur.com/6sNbro9.png");
+}
+
+#ability{
+  right:26px;
+  bottom:115px;
+  width:32px;
+  height:32px;
+  background-image:url("https://i.imgur.com/dUr83sC.png");
+}
+
+#pause{
+  left:195px;
+  bottom:20px;
+  width:32px;
+  height:32px;
+  background-image:url("https://i.imgur.com/gSpCQsg.png");
+}
+</style>
+</head>
+
+<body>
+<canvas id="game"></canvas>
+
+<div id="ui">
+  <div class="btn" id="left"></div>
+  <div class="btn" id="up" onclick=toggle("up")></div>
+  <div class="btn" id="down" onclick=toggle("down")></div>
+  <div class="btn" id="right"></div>
+  <div class="btn" id="jump"></div>
+  <div class="btn" id="ability" onclick= ability()></div>
+  <div class="btn" id="pause" onclick=pause()></div>
+</div>
+
+<script>
+let playerId = localStorage.getItem("playerId")
+
+if (!playerId) {
+  playerId = crypto.randomUUID()
+  localStorage.setItem("playerId", playerId)
+}
+
+document.addEventListener("touchstart", () => {
+  const allSounds = [
+    ...Object.values(musics),
+    ...Object.values(audios)
+  ]
+
+  allSounds.forEach(a => {
+    try {
+      a.play()
+      a.pause()
+      a.currentTime = 0
+    } catch(e){}
+  })
+  
+  state = "game"
+  resetLevel()
+  loop()
+}, { once: true })
+
+document.addEventListener("touchstart", e => {
+  if (e.touches.length > 1) e.preventDefault()
+}, { passive: false })
+
+document.addEventListener("gesturestart", e => e.preventDefault())
+
+document.addEventListener("contextmenu", e => e.preventDefault())
+document.addEventListener("selectstart", e => e.preventDefault())
+
+const c=document.getElementById("game")
+const ctx=c.getContext("2d")
+c.height = 670
+c.width = 390
+ctx.imageSmoothingEnabled=false
+ctx.webkitImageSmoothingEnabled=false
+ctx.mozImageSmoothingEnabled=false
+
+let state = "startScreen"
+
+let keys={left:false,right:false,up:false,down:false,jump:false,pause:false}
+
+left.ontouchstart=()=>keys.left=true
+left.ontouchend=()=>keys.left=false
+
+right.ontouchstart=()=>keys.right=true
+right.ontouchend=()=>keys.right=false
+
+jump.ontouchstart=()=>keys.jump=true
+jump.ontouchend=()=>keys.jump=false
+
+function toggle(key) {
+  keys[key] = !keys[key]
+}
+
+function pause() {
+  if (state !== "game" && state !== "paused") return
+
+  if (state === "game") {
+    state = "paused"
+
+    const cx = c.width / 2
+    const cy = c.height / 2
+    const r = Math.max(c.width, c.height) / 1.2
+
+    const g = ctx.createRadialGradient(
+      cx, cy, r * 0.1,
+      cx, cy, r
+    )
+
+    g.addColorStop(0, "rgba(35, 89, 67, 0.1)")
+    g.addColorStop(0.6, "rgba(24, 64, 48, 0.3)")
+    g.addColorStop(1, "rgba(16, 46, 34, 0.5)")
+
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, c.width, c.height)
+
+    ctx.fillStyle = "#fff"
+    ctx.font = "24px Arial"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+    ctx.fillText("Pausado", cx, cy)
+  }
+  else {
+    state = "game"
+  }
+}
+
+function ability(){}
+
+const gravity=0.7
+let scale=4
+let objScale = 2
+let propScale = 2
+let checkpointScale = 3
+let eneScale = 4
+
+let fadeAlpha = 0
+let fadeDirection = 0
+let fadeSpeed = 0.03
+let fadeCallback = null
+
+function startFade(direction, callback){
+  fadeDirection = direction
+  fadeCallback = callback
+}
+
+function isOnScreen(obj, margin = 0){
+  return (
+    obj.x + obj.w >= cameraX - margin &&
+    obj.x <= cameraX + c.width + margin &&
+    obj.y + obj.h >= cameraY - margin &&
+    obj.y <= cameraY + c.height + margin
+  )
+}
+
+function isNearScreen(obj, range = 200){
+  return (
+    obj.x + obj.w >= cameraX - range &&
+    obj.x <= cameraX + c.width + range
+  )
+}
+
+const levelData1_1={
+music: "favela_ambience",
+bgSrc: "https://i.imgur.com/GP0sGI6.png",
+skySrc: "https://i.imgur.com/xI6Z2Ny.png",
+player:{x:150,y:372},
+startPlat:{x:0,y:442},
+exitPlat:{x:5000,y:462},
+checkpoint:{x:2250,y:422},
+platforms:[
+{x:1000,y:482,w:1000,type:"stone1"},
+{x:-100,y:462,w:1100,type:"stone1"},
+{x:2150,y:462,w:500,type:"dirt1"},
+{x:3050,y:462,w:1000,type:"stone1"},
+{x:2650,y:362,w:100,type:"dirt1"},
+{x:2750,y:262,w:100,type:"dirt1"},
+{x:2850,y:162,w:100,type:"dirt1"},
+{x:2950,y:62,w:100,type:"dirt1"},
+{x:4200,y:462,w:100,type:"stone1"},
+{x:4750,y:482,w:500,type:"stone1"},
+{x:4450,y:462,w:300,type:"stone1"}
+],
+topPlatforms:[
+{x:1200,y:372,w:200,type:"stone1"},
+{x:1300,y:322,w:200,type:"stone1"},
+{x:1700,y:292,w:200,type:"stone1"}
+],
+pasteis:[
+{x:1800,y:232}
+],
+props:[
+{x:1350,y:382,type:"signRun",onTopPlatform:true},
+{x:1700,y:222,type:"pole1",onTopPlatform:true},
+{x:670,y:412,type:"bench1"},
+{x:2950,y:122,type:"signGo"},
+{x:3400,y:392,type:"bushButterfly",gif:true},
+{x:3525,y:392,type:"bushButterfly",gif:true},
+],
+frontProps:[
+{x:300,y:522,type:"pole1"},
+{x:1025,y:522,type:"bushFlower"},
+{x:1150,y:522,type:"bush"},
+{x:1275,y:522,type:"bushFlower"},
+{x:1400,y:522,type:"bushButterfly",gif:true},
+{x:1525,y:522,type:"bush"},
+{x:1650,y:522,type:"bushFlower"},
+{x:1775,y:522,type:"bush"},
+{x:1900,y:522,type:"bushButterfly",gif:true},
+{x:3100,y:522,type:"palm1"},
+{x:3300,y:522,type:"palm2"},
+{x:3500,y:522,type:"palm1"},
+{x:3700,y:522,type:"palm2"},
+{x:3900,y:522,type:"palm2"},
+],
+bigProps:[
+{x:350,y:392,type:"favelaHouse1"},
+{x:2200,y:412,type:"favelaHouse2"},
+{x:3200,y:392,type:"favelaHouse2"},
+{x:3600,y:392,type:"favelaHouse3"},
+{x:1500,y:412,type:"palm1", onTopPlatform:true},
+{x:4500,y:392,type:"favelaHouse1"},
+],
+pexeira:[
+{x:1700,y:442,vx:-2},
+{x:3550,y:442,vx:-4},
+{x:3550,y:442,vx:4},
+],
+rosal:[
+{x: 3550,y:372}
+]
+}
+
+const levelData2_1={
+music: "favela_ambience",
+bgSrc: "https://i.imgur.com/GP0sGI6.png",
+skySrc: "https://i.imgur.com/xI6Z2Ny.png",
+player:{x:150,y:372},
+startPlat:{x:0,y:442},
+exitPlat:{x:5000,y:462},
+checkpoint:{x:2250,y:422},
+platforms:[
+{x:-100,y:462,w:1600,type:"stone1"},
+],
+pexeira:[
+{x:1490,y:442,vx:-4},
+],
+}
+
+const levelData3_1={}
+const levelData4_1={}
+const levelData5_1={}
+const levelData6_1={}
+const bossData1={}
+
+const levels = {
+     startLevel: 1,
+     maxLevel: 1,
+     levels: [
+         { level: 0, world: 1, title: 'Altinho Antics', data: levelData1_1 },
+         { level: 1, world: 1, title: 'Frenzy Favela', data: levelData2_1 },
+         { level: 2, world: 1, title: 'Big Jeff Rampage', data: levelData3_1 },
+         { level: 3, world: 1, title: 'Pastel Problem', data: levelData4_1 },
+         { level: 4, world: 1, title: 'Una River Rumble', data: levelData5_1 },
+         { level: 5, world: 1, title: 'Savage Surbubs', data: levelData6_1 },
+         { level: 6, world: 1, title: 'King Pastelo Panic', data: bossData1 },
+     ]
+}
+let level = levels.startLevel
+let levelTitle = levels.levels[level].title
+let levelData = levels.levels[level].data
+
+let checkpoints = Array(levels.levels.length).fill(false)
+
+let player,checkpoint,platforms,topPlatforms,spikes,enemiesPexeira,enemiesRosal,pasteis, props, frontProps, bigProps,bullets, particles
+let cameraX=0
+let cameraY=0
+let flipPlayer = false
+
+const startImg=new Image()
+startImg.src="https://i.imgur.com/UacPTdB.png"
+
+const exitImg=new Image()
+exitImg.src="https://i.imgur.com/FzYQWv7.png"
+
+const bgImg=new Image()
+
+const skyImg=new Image()
+
+function stopSounds() {
+    Object.values(musics).forEach(audio => {
+     audio.pause()
+     audio.currentTime = 0
+   })
+}
+
+function resetLevel(){
+  
+keys.left=false
+keys.right=false
+keys.up=false
+keys.down=false
+keys.jump=false
+keys.pause=false
+
+bgImg.src = levelData.bgSrc || ""
+skyImg.src = levelData.skySrc || ""
+
+if (levelData.music === "favela_ambience") {
+  musics.favelaAmbience.play()
+}
+
+player={
+  x: checkpoints[level] ? Math.round(levelData.checkpoint?.x + 145/2) : levelData.player?.x ?? 0,
+  y: checkpoints[level] ? levelData.checkpoint?.y - 90 : levelData.player?.y ?? 0,
+  w:21,
+  h:88,
+  vx:0,
+  vy:0,
+  onGround:false,
+  onTopPlatform:false,
+  immortal:false,
+  immortalTime:0,
+  dead:false,
+  move:true,
+  pastelBoost: 0,
+  state:"idle",
+  animFrame:0,
+  mode:"npc",
+  onExit:false
+}
+
+checkpoint = {
+    x: levelData.checkpoint?.x ?? 0,
+    y: levelData.checkpoint?.y ?? 0,
+    w: 145,
+    h: 75,
+    active: checkpoints[level]
+}
+
+platforms = (levelData.platforms || []).map(p => ({
+  x:p.x,
+  y:p.y,
+  visualW: p.w,
+  w:p.w + 10*objScale,
+  h:c.height,
+  type: p.type
+}))
+
+topPlatforms = (levelData.topPlatforms || []).map(p => ({
+  x:p.x,
+  y:p.y,
+  visualW: p.w,
+  w:p.w + 9*objScale,
+  h:c.height,
+  type: p.type
+}))
+
+spikes = (levelData.spikes || []).map(s => ({ ...s }))
+
+enemiesPexeira = (levelData.pexeira || []).map(pe => ({
+  x:pe.x,
+  y:pe.y,
+  w:21,
+  h:88,
+  vx:pe.vx,
+  vy:0,
+  onGround:false,
+  img: enemyImgs.pexeira,
+  state:"walking",
+  animFrame:0
+}))
+
+enemiesRosal = (levelData.rosal || []).map(e => ({
+  x:e.x,
+  y:e.y,
+  w:38,
+  h:88,
+  img: enemyImgs.rosal,
+  state:"walk",
+  animFrame:0,
+  cool:90,
+  baseCool:90,
+  vy:0
+}))
+
+pasteis = (levelData.pasteis || []).map(b => ({
+  x:b.x,
+  y:b.y,
+  w:20,
+  h:20,
+  active:true
+}))
+
+props = (levelData.props || []).map(p => {
+  const obj = { ...p }
+  if (obj.gif) obj.frame = 0
+  return obj
+})
+
+frontProps = (levelData.frontProps || []).map(p => {
+  const obj = { ...p }
+  if (obj.gif) obj.frame = 0
+  return obj
+})
+
+bigProps = (levelData.bigProps || []).map(p => {
+  const obj = { ...p }
+  if (obj.gif) obj.frame = 0
+  return obj
+})
+
+bullets=[]
+particles=[]
+
+cameraX = player.x - c.width / 2
+if (cameraX < 0) cameraX = 0
+
+cameraY = player.y - c.height / 2
+if (cameraY < 0) cameraY = 0
+
+}
+
+function rect(a,b){
+return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y
+}
+
+const musics = {
+    favelaAmbience:new Audio('https://crooked-crimson-tvij9hiova.edgeone.app/favela%20ambience.m4a')
+}
+
+Object.values(musics).forEach(audio => {
+  audio.loop = true
+})
+
+const audios = {
+    defeat:new Audio('https://audiosbatch2-eq75v1d4ad.edgeone.app/deathSound.m4a'),
+    checkpoint:new Audio('https://checkpointmusic-j1z1qspkof.edgeone.app/checkpoint.m4a'),
+    victory: new Audio('https://audiosbatch2-eq75v1d4ad.edgeone.app/Victory.m4a'),
+    jump:new Audio('https://testeaudioretro-ycq241iayx.edgeone.app/jump.m4a'),
+    pastelEat:new Audio('https://testeaudioretro-ycq241iayx.edgeone.app/pastelEat.m4a'),
+    pastelDash:new Audio('https://testeaudioretro-ycq241iayx.edgeone.app/dash.m4a'),
+    pexeira:new Audio('https://crooked-crimson-tvij9hiova.edgeone.app/pexeira%20hurt.m4a'),
+    shot:new Audio('https://shot69-6odum7qiun.edgeone.app/shot.m4a')
+    
+}
+
+function killAllEnemies(){
+    enemiesPexeira.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+    
+    enemiesRosal.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+}
+
+function enemyHit(player,enemy){
+
+if (enemy.dead || player.dead) return
+
+if(
+player.vy > 0 &&
+player.y + player.h - player.vy <= enemy.y &&
+player.y + player.h >= enemy.y &&
+player.x + player.w > enemy.x &&
+player.x < enemy.x + enemy.w
+){
+enemy.dead=true
+enemy.animFrame = 0
+enemy.state = "dead"
+player.vy=-10
+return "stomp"
+}
+
+if(
+player.x<enemy.x+enemy.w &&
+player.x+player.w>enemy.x &&
+player.y<enemy.y+enemy.h &&
+player.y+player.h>enemy.y &&
+player.immortal
+){
+enemy.dead=true
+enemy.animFrame = 0
+enemy.state = "dead"
+if(!player.pastelBoost) {
+    audios.pastelDash.pause()
+    audios.pastelDash.currentTime = 0
+    audios.pastelDash.play()
+}
+player.pastelBoost = 40
+return "killed"
+}
+
+if(
+player.x<enemy.x+enemy.w &&
+player.x+player.w>enemy.x &&
+player.y<enemy.y+enemy.h &&
+player.y+player.h>enemy.y &&
+!player.immortal
+){
+return "player"
+}
+
+return null
+}
+
+function enemyKill(enemy){
+if (enemy.dead) return
+
+enemy.dead=true
+enemy.animFrame = 0
+enemy.state = "dead"
+return null
+}
+
+function solidCollision(a,b){
+if(!rect(a,b))return
+
+const dx1 = a.x + a.w - b.x
+const dx2 = b.x + b.w - a.x
+const dy1 = a.y + a.h - b.y
+const dy2 = b.y + b.h - a.y
+
+const minX = Math.min(dx1,dx2)
+const minY = Math.min(dy1,dy2)
+
+if(minX < minY){
+if(dx1 < dx2) a.x = b.x - a.w
+else a.x = b.x + b.w
+}
+else{
+if(dy1 < dy2){
+a.y = b.y - a.h
+a.vy = 0
+a.onGround = true
+}
+else{
+a.y = b.y + b.h
+a.vy = 0
+}
+}
+}
+
+function solidCollisionForStroll(a,b){
+if(!rect(a,b))return
+
+const dx1 = a.x + a.w - b.x
+const dx2 = b.x + b.w - a.x
+const dy1 = a.y + a.h - b.y
+const dy2 = b.y + b.h - a.y
+
+const minX = Math.min(dx1,dx2)
+const minY = Math.min(dy1,dy2)
+
+if(minX < minY){
+a.vx *= -1
+if(dx1 < dx2) a.x = b.x - a.w
+else a.x = b.x + b.w
+}
+else{
+if(dy1 < dy2){
+a.y = b.y - a.h
+a.vy = 0
+a.onGround = true
+}
+else{
+a.y = b.y + b.h
+a.vy = 0
+}
+}
+}
+
+function die(){
+if(player.immortal || player.dead) return
+    
+    stopSounds()
+    audios.defeat.play()
+    audios.defeat.currentTime = 1.25
+
+    player.state = "dead"
+    state = "dead"
+    player.dead = true
+    player.move = false
+    player.vy = -5
+
+    setTimeout(() => {
+
+        startFade(1, () => {
+
+            player.dead = false
+            player.move = true
+            state = "game"
+
+            resetLevel()
+            startFade(-1)
+
+        })
+
+    }, 5000)
+}
+
+
+function fell(){
+if(player.dead) return
+
+if(player.immortal){
+    player.vy = -30
+    return
+}
+    
+    stopSounds()
+    audios.defeat.play()
+    audios.defeat.currentTime = 1.25
+
+    player.state = "falling"
+    state = "dead"
+    player.dead = true
+    player.move = false
+
+    setTimeout(() => {
+
+        startFade(1, () => {
+
+            player.dead = false
+            player.move = true
+            state = "game"
+
+            resetLevel()
+            startFade(-1)
+
+        })
+
+    }, 5000)
+}
+
+
+function absoluteDie(){
+if(player.dead) return
+    
+    stopSounds()
+    audios.defeat.play()
+    audios.defeat.currentTime = 1.25
+
+    player.state = "dead"
+    state = "dead"
+    player.dead = true
+    player.move = false
+    player.vy = -5
+
+    setTimeout(() => {
+
+        startFade(1, () => {
+
+            player.dead = false
+            player.move = true
+            state = "game"
+
+            resetLevel()
+            startFade(-1)
+
+        })
+
+    }, 5000)
+}
+
+function exit(){
+    stopSounds()
+    killAllEnemies()
+    audios.victory.play()
+    
+    player.state = "comemorating"
+    state = "exit"
+    player.onExit = true
+    player.move = false
+    checkpoints[level] = false
+
+    setTimeout(() => {
+
+        startFade(1, () => {
+
+            level++
+            if(level > levels.maxLevel && state !== "demo"){
+                 demoFinished()
+            } else {
+              
+              levelData = levels.levels[level].data
+              levelTitle = levels.levels[level].title
+            }
+
+            player.move = true
+            player.onExit = false
+            state = "game"
+
+            resetLevel()
+            startFade(-1)
+
+        })
+    }, 5000)
+}
+
+function createParticle(type, duration, x, y, vx = 0, vy = 0) {
+     particles.push({ type: type, time: 0, duration: duration, frame: 0, x: x, y: y, vx: vx, vy: vy })
+  }
+
+let gameTime = 0
+let idleTime = 0
+let preservedVx = 1
+
+function update(){
+  if (state === "startScreen") return
+  gameTime++
+  idleTime++
+  preservedVx = Math.abs(player.vx)
+  
+  if (player.x < 0) {
+        player.x = 0 + player.vx
+  }
+  
+  if ((player.x > levelData.exitPlat.x + 50) && !player.onExit) exit()
+ 
+  if (player.dead && player.y < c.height) player.state = "dead"
+  else if (player.onExit) player.state = "comemorating"
+  else if (player.vy && player.vy > 0) {
+        idleTime = 0
+        player.state = "falling"
+  }
+  else if (player.vy && player.vy < 0) {
+        idleTime = 0
+        player.state = "jumping"
+  }
+  else if (player.vx !== 0) {
+    idleTime = 0
+    player.state = "walking"
+} 
+else {
+    if (!player.dead) {
+    if (idleTime > 400) player.state = "idle_long"
+    else player.state = "idle"
+    }
+}
+  
+player.vx=0
+if(keys.left && player.move)player.vx=
+keys["down"] && !player.immortal ? -6 
+: !player.immortal &&  !keys["down"] ? -4 
+: player.immortal &&  !keys["down"] ? -6 
+: player.immortal &&  keys["down"] ? - 8 
+: -4;
+if(keys.right && player.move) player.vx=
+keys["down"] && !player.immortal ? 6
+: !player.immortal &&  !keys["down"] ? 4
+: player.immortal &&  !keys["down"] ? 6
+: player.immortal &&  keys["down"] ? 8
+: 4;
+if(keys.jump&&(player.onGround || player.pastelBoost) && player.move){
+if(player.mode === "deives") audios.jump.play()
+player.vy=-13
+player.onGround=false
+player.onTopPlatform=false
+}
+
+player.vy+=gravity
+player.pastelBoost=player.pastelBoost>5?player.pastelBoost-5:0
+player.x+=player.pastelBoost?(player.vx + player.pastelBoost)*(flipPlayer ? -1 : 1):player.vx
+player.y+=player.vy
+player.onGround=false
+player.onTopPlatform=false
+
+flipPlayer = player.vx < 0 ? true : player.vx > 0 ? false : flipPlayer
+
+if(rect(player,checkpoint) && !player.dead && !checkpoint.active) {
+    checkpoints[level] = true
+    checkpoint.active = true
+    audios.checkpoint.play()
+    createParticle("checkpointStars", 5, player.x, player.y, Math.random() * 2 - 1, Math.random() * 2 - 1)
+}
+
+platforms.forEach(p=>{
+
+if(player.vy>=0&&player.y+player.h>=p.y&&player.y+player.h-player.vy<=p.y&&player.x+player.w>p.x&&player.x<p.x+p.w){
+player.y=p.y-player.h
+player.vy=0
+player.onGround=true
+}
+else if(player.y+player.h>=p.y){
+if(player.x+player.w>p.x&&player.x<p.x){
+player.x=p.x-player.w
+}
+if(player.x<p.x+p.w&&player.x>p.x){
+player.x=p.x+p.w
+}
+}
+
+})
+
+topPlatforms.forEach(p=>{
+
+if(player.vy>0&&player.y+player.h>=p.y&&player.y+player.h-player.vy<=p.y&&player.x+player.w>p.x&&player.x<p.x+p.w){
+player.y=p.y-player.h
+player.vy=0
+player.onGround=true
+player.onTopPlatform=true
+}
+
+if(player.onTopPlatform){
+
+if(player.y<=p.y+p.h&&player.y+player.h>p.y+p.h&&player.x+player.w>p.x&&player.x<p.x+p.w){
+player.y=p.y+p.h
+player.vy=0
+}
+
+if(player.x+player.w>p.x&&player.x<p.x&&player.y+player.h>p.y&&player.y<p.y+p.h){
+player.x=p.x-player.w
+}
+
+if(player.x<p.x+p.w&&player.x>p.x&&player.y+player.h>p.y&&player.y<p.y+p.h){
+player.x=p.x+p.w
+}
+
+}
+
+})
+
+enemiesPexeira.forEach(pe=>{
+  const hit = enemyHit(player, pe)
+
+  if((hit === "stomp" || hit === "killed") && !player.dead){
+    audios.pexeira.pause()
+    audios.pexeira.currentTime = 1
+    audios.pexeira.play()
+}
+
+  if(hit === "player" && !player.dead){
+    die()
+    return
+  }
+
+  if (pe.dead) {
+    pe.vy += gravity
+    pe.y += pe.vy
+    return
+  }
+
+  pe.vy += gravity
+  pe.x += pe.vx
+  pe.y += pe.vy
+  pe.onGround = false
+
+  platforms.forEach(p=>{
+    if(
+      pe.y+pe.h>p.y &&
+      pe.y<p.y &&
+      pe.x+pe.w>p.x &&
+      pe.x<p.x+p.w
+    ){
+      pe.y=p.y-pe.h
+      pe.vy=0
+      pe.onGround=true
+    }
+    else if(
+      pe.x+pe.w>p.x &&
+      pe.x<p.x+p.w &&
+      pe.y+pe.h>=p.y &&
+      pe.y<p.y
+    ){
+      if(pe.vx>0){
+        pe.x=p.x-pe.w
+        pe.vx*=-1
+      }
+      else if(pe.vx<0){
+        pe.x=p.x+p.w
+        pe.vx*=-1
+      }
+    }
+  })
+  
+  topPlatforms.forEach(p=>{
+    if(
+      pe.y+pe.h>p.y &&
+      pe.y<p.y &&
+      pe.x+pe.w>p.x &&
+      pe.x<p.x+p.w
+    ){
+      pe.y=p.y-pe.h
+      pe.vy=0
+      pe.onGround=true
+    }
+  })
+
+  if(pe.onGround){
+    const frontX = pe.vx>0 ? pe.x+pe.w+1 : pe.x-1
+    const footY = pe.y+pe.h+2
+
+    let hasGround=false
+    
+    topPlatforms.forEach(p=>{
+      if(
+        frontX>p.x &&
+        frontX<p.x+p.w &&
+        footY>=p.y &&
+        footY<=p.y+5
+      ){
+        hasGround=true
+      }
+    })
+
+    platforms.forEach(p=>{
+      if(
+        frontX>p.x &&
+        frontX<p.x+p.w &&
+        footY>=p.y &&
+        footY<=p.y+5
+      ){
+        hasGround=true
+      }
+    })
+
+    if(!hasGround){
+      pe.vx*=-1
+    }
+  }
+})
+
+if(player.y>c.height) fell()
+spikes.forEach(s=>{if(rect(player,s))die()})
+
+enemiesRosal.forEach(e => {
+  if (e.dead) {
+    e.vy += gravity
+    e.y += e.vy
+    return
+  }
+  
+  const hit = enemyHit(player, e)
+  e.cool--
+
+  if (e.cool <= 0) {
+    bullets.push({ x: e.x -10, y: e.y + 5, w: 8, h: 4, vx: -6, time: 0, maxTime: 80 })
+    e.cool = e.baseCool
+
+    if (Math.abs(Math.hypot((player.x - e.x), (player.y - e.y))) <= 1000) {
+        audios.shot.pause()
+        audios.shot.currentTime = 0
+        audios.shot.play()
+    }
+    
+    e.state = "walking"
+    e.animFrame = 0
+  }
+
+  if (e.state === "walking") {
+    e.animFrame += 0.15
+
+    if (e.animFrame >= 4) {
+      e.state = "idle"
+      e.animFrame = 0
+    }
+  }
+
+  if((hit === "stomp" || hit === "killed") && !player.dead){
+    audios.pexeira.pause()
+    audios.pexeira.currentTime = 1
+    audios.pexeira.play()
+  }
+
+  if (hit === "player" && !player.dead) {
+    die()
+    return
+  }
+
+})
+
+for (let i = bullets.length - 1; i >= 0; i--) {
+  const b = bullets[i]
+  b.time++
+  if (b.time >= b.maxTime) {
+    bullets.splice(i, 1)
+    continue
+  }
+  b.x += b.vx
+  if (rect(player, b)) {
+    bullets.splice(i, 1)
+    die()
+  }
+}
+
+for (let i = particles.length - 1; i >= 0; i--) {
+  const p = particles[i]
+  if (p.time >= p.duration) {
+    particles.splice(i, 1)
+    continue
+  }
+  p.x += p.vx
+  p.y += p.vy
+}
+
+for (let i = pasteis.length - 1; i >= 0; i--) {
+  const p = pasteis[i]
+
+  p.y += Math.sin(gameTime * 0.1)
+
+  if (rect(player, p)) {
+    audios.pastelEat.currentTime = 0.2
+    audios.pastelEat.play()
+
+    player.immortal = true
+    player.immortalTime = 300
+
+    createParticle("checkpointStars", 5, p.x + p.w/2, p.y + p.h/2, Math.random() * 2 - 1, Math.random() * 2 - 1)
+    pasteis.splice(i, 1)
+  }
+}
+
+if(player.immortal){
+player.immortalTime--
+if(player.immortalTime<=0)player.immortal=false
+}
+
+cameraX=player.x-c.width/2
+if(cameraX<0)cameraX=0
+
+cameraY=player.y<c.height?player.y-c.height/2:cameraY
+
+if (fadeDirection !== 0) {
+  fadeAlpha += fadeSpeed * fadeDirection
+
+  if (fadeAlpha >= 1) {
+    fadeAlpha = 1
+    fadeDirection = 0
+    if (fadeCallback) fadeCallback()
+  }
+
+  if (fadeAlpha <= 0) {
+  fadeAlpha = 0
+  fadeDirection = 0
+  }
+}
+
+}
+
+const platformImgs = {
+stone1: new Image(),
+dirt1: new Image(),
+wood1: new Image(),
+}
+
+platformImgs.stone1.src="https://i.imgur.com/5MmOF8g.png"
+platformImgs.dirt1.src="https://i.imgur.com/lhcGCNE.png"
+platformImgs.wood1.src="https://i.imgur.com/TzkRHji.png"
+
+function drawTopPlatform(p){
+    const img = platformImgs[p.type] || platformImgs.stone1
+    if(!img || !img.complete) return
+
+    const tileW = 16 * objScale
+    const tileH = 512 * objScale
+
+    let visualStart = Math.floor(p.x - cameraX - tileW)
+    const startY = Math.floor(p.y - 40*objScale - cameraY)
+
+    const tiles = Math.ceil(p.w / tileW)
+
+    for(let i = 0; i < tiles + 2; i++){
+        let sx
+
+        if(i === 1){
+            sx = 0
+            visualStart = visualStart + 13
+        }
+        else if(i === tiles + 1){
+            sx = 33
+            visualStart = visualStart - 13
+        }
+        else{
+            sx = 17
+            visualStart = Math.floor(p.x - cameraX - tileW)
+        }
+        
+        const offsetI = i === 0 ? 1 : i === 1 ? 0 : i
+
+        ctx.drawImage(
+            img,
+            sx, 0, 16, 512,
+            visualStart + offsetI * tileW,
+            startY,
+            tileW,
+            tileH
+        )
+    }
+}
+
+function drawPlatform(p){
+    const img = platformImgs[p.type] || platformImgs.stone1
+    if(!img || !img.complete) return
+
+    const tileW = 16 * objScale
+    const tileH = 40 * objScale
+
+    const tiles = Math.ceil((p.visualW + 26*objScale) / tileW)
+
+    const startY = Math.floor(p.y - 38*objScale - cameraY)
+
+    for(let i=0;i<tiles;i++){
+        let sx
+
+        if(i===0) sx = 0
+        else if(i===tiles-1) sx = 33
+        else sx = 17
+
+        ctx.drawImage(
+            img,
+            sx,0,16,40,
+            Math.floor(p.x - 6*objScale - cameraX) + i*tileW,
+            startY,
+            tileW,
+            tileH
+        )
+    }
+}
+
+function drawPlatformBottom(p){
+    const img = platformImgs[p.type] || platformImgs.stone1
+    if(!img || !img.complete) return
+
+    const tileW = 16 * objScale
+    const tileH = 472 * objScale
+
+    const tiles = Math.ceil((p.visualW + 26*objScale) / tileW)
+
+    const startY = Math.floor(p.y - 40*objScale - cameraY)
+
+    for(let i=0;i<tiles;i++){
+        let sx
+
+        if(i===0) sx = 0
+        else if(i===tiles-1) sx = 33
+        else sx = 17
+
+        ctx.drawImage(
+            img,
+            sx,40,16,472,
+            Math.floor(p.x - 6*objScale - cameraX) + i*tileW,
+            startY + 40*objScale,
+            tileW,
+            tileH
+        )
+    }
+}
+
+const spikeImgs = {
+metalic: new Image()
+}
+
+spikeImgs.metalic.src="https://i.imgur.com/ViYmh0b.png"
+
+function drawSpikes(p) {
+  const img = spikeImgs[p.type]
+  if (!img || !img.complete) return
+
+  const tileW = 16 * objScale
+  const tileH = 9 * objScale
+
+  const tiles = Math.round(p.w / tileW)
+  const startX = p.x - cameraX
+  const startY = p.y - cameraY
+  const y = p.y - tileH + p.h
+
+  for (let i = 0; i < tiles; i++) {
+    const x = startX + i * tileW
+
+    ctx.drawImage(
+      img,
+      x,
+      y,
+      tileW,
+      tileH
+    )
+  }
+}
+
+function drawStartExit(){
+  const w = 64 * eneScale
+  const h = 128 * eneScale
+
+  ctx.drawImage(
+    startImg,
+    Math.floor(levelData.startPlat.x - cameraX),
+    Math.floor(levelData.startPlat.y - h - cameraY),
+    w,
+    h
+  )
+
+  ctx.drawImage(
+    exitImg,
+    Math.floor(levelData.exitPlat.x - cameraX),
+    Math.floor(levelData.exitPlat.y - h - cameraY),
+    w,
+    h
+  )
+}
+
+const checkpointImg = new Image()
+checkpointImg.src = "https://i.imgur.com/X1rq86i.png"
+
+const enemyImgs = {
+    pexeira: new Image(),
+    rosal: new Image()
+}
+
+enemyImgs.pexeira.src = "https://i.imgur.com/olzQ7NF.png"
+enemyImgs.rosal.src = "https://i.imgur.com/HJbBUPA.png"
+
+function drawEnemy(enemy) {
+    const size = 64
+    const isDead = enemy.state === "dead"
+    const isIdle = enemy.state === "idle"
+
+    const frames = 4
+    const frame = Math.floor(enemy.animFrame || 0) % frames
+    const animY = isDead ? 65 : isIdle ? 128 : 0
+
+    const drawSize = size * eneScale / 2
+    const drawX = enemy.x - cameraX + enemy.w / 2 - drawSize / 2.2
+    const drawY = enemy.y + enemy.h - drawSize - cameraY
+
+    ctx.save()
+
+    if (!isDead && enemy.vx > 0) {
+        ctx.translate(drawX + drawSize, drawY)
+        ctx.scale(-1, 1)
+        ctx.drawImage(
+            enemy.img,
+            frame * size,
+            animY,
+            size,
+            size,
+            0,
+            0,
+            drawSize,
+            drawSize
+        )
+    } else {
+        ctx.drawImage(
+            enemy.img,
+            frame * size,
+            animY,
+            size,
+            size,
+            drawX,
+            drawY,
+            drawSize,
+            drawSize
+        )
+    }
+
+    ctx.restore()
+
+    enemy.animFrame = (enemy.animFrame || 0) + (isDead && enemy.animFrame >= 4 ? -0.15 : isDead && enemy.animFrame < 4 ? 0.15 : 0.15)
+}
+
+const playersImgs = {
+    npc: new Image(),
+    npcPastel: new Image()
+}
+
+playersImgs.npc.src = "https://i.imgur.com/wd4QRu8.png"
+playersImgs.npcPastel.src = "https://i.imgur.com/GNco4zb.png"
+
+function drawPlayer(player) {
+   const img = player.mode === "npc" && player.immortal ? playersImgs.npcPastel : playersImgs[player.mode] || playersImgs.npc
+    if(!img || !img.complete) return
+  
+    const size = 64
+    const isIdle = player.state === "idle"
+    const isIdleLong = player.state === "idle_long"
+    const isWalking = player.state === "walking"
+    const isJumping = player.state === "jumping"
+    const isFalling = player.state === "falling"
+    const isDead = player.state === "dead"
+    const isComemorating = player.state === "comemorating"
+
+    const frames = 4
+    const frame = Math.floor(player.animFrame || 0) % frames
+    const animY = isIdle ? 0 : isIdleLong ? 65 : isWalking ? 129 : isJumping ? 193 : isFalling ? 257 : isDead ? 321  : isComemorating ? 385 : 0
+
+    const drawSize = size * eneScale / 2
+    const drawX = player.x - cameraX + player.w / 2 - drawSize / 2.2
+    const drawY = player.y + player.h - drawSize - cameraY
+
+    ctx.save()
+
+    if (!isDead && flipPlayer) {
+        ctx.translate(drawX + drawSize, drawY)
+        ctx.scale(-1, 1)
+        ctx.drawImage(
+            img,
+            frame * size,
+            animY,
+            size,
+            size,
+            0,
+            0,
+            drawSize,
+            drawSize
+        )
+    } else {
+        ctx.drawImage(
+            img,
+            frame * size,
+            animY,
+            size,
+            size,
+            drawX,
+            drawY,
+            drawSize,
+            drawSize
+        )
+    }
+
+    ctx.restore()
+
+    player.animFrame = (player.animFrame || 0) + (isWalking ? preservedVx*0.0375 : 0.15)
+}
+
+const propsImgs = {
+none: new Image(),
+signGo: new Image(),
+signRun: new Image(),
+pole1: new Image(),
+bench1: new Image(),
+bush: new Image(),
+bushFlower: new Image(),
+bushButterfly: new Image(),
+palm1: new Image(),
+palm2: new Image(),
+favelaHouse1: new Image(),
+favelaHouse2: new Image(),
+favelaHouse3: new Image()
+}
+
+propsImgs.none.src = ""
+propsImgs.signGo.src="https://i.imgur.com/w3zbPtP.png"
+propsImgs.signRun.src="https://i.imgur.com/C2zHlu5.png"
+propsImgs.pole1.src="https://i.imgur.com/LvGs2IU.png"
+propsImgs.bench1.src="https://i.imgur.com/ODpGAyN.png"
+propsImgs.bush.src="https://i.imgur.com/zcQUD6o.png"
+propsImgs.bushFlower.src="https://i.imgur.com/cyFpVXY.png"
+propsImgs.bushButterfly.src="https://i.imgur.com/c6K1u4f.png"
+propsImgs.palm1.src = "https://i.imgur.com/IXcfnhF.png"
+propsImgs.palm2.src = "https://i.imgur.com/hTUCAmj.png"
+propsImgs.favelaHouse1.src = "https://i.imgur.com/WpmCXdc.png"
+propsImgs.favelaHouse2.src = "https://i.imgur.com/WwM19mi.png"
+propsImgs.favelaHouse3.src = "https://i.imgur.com/tA2fd5T.png"
+
+function drawPropGif(p){
+  const fw = 64
+  const fh = 128
+  const frames = 4
+
+  const drawW = Math.round(fw * propScale)
+  const drawH = Math.round(fh * propScale)
+
+  if (p.x - cameraX > c.width || p.x - cameraX + drawW < 0) return
+
+  if (typeof p.frame !== "number") p.frame = 0
+
+  const img = propsImgs[p.type]
+  if(!img || !img.complete) return
+
+  const frame = Math.floor(p.frame) % frames
+
+  const drawX = (p.x - cameraX) | 0
+  const drawY = (p.y - drawH - cameraY) | 0
+
+  ctx.drawImage(
+    img,
+    frame * fw,
+    0,
+    fw,
+    fh,
+    drawX,
+    drawY,
+    drawW,
+    drawH
+  )
+
+  p.frame += 0.1
+}
+
+const particleImgs = {
+    test: new Image(),
+    checkpointStars: new Image()
+}
+
+particleImgs.test.src = "https://i.imgur.com/gQmbiCH.png"
+particleImgs.checkpointStars.src = "https://i.imgur.com/Wxmw1mt.png"
+
+function drawParticle(p) {
+  const fw = 16
+  const fh = 16
+  const frames = p.duration
+
+  const drawW = Math.round(fw * propScale)
+  const drawH = Math.round(fh * propScale)
+
+  if (p.x - cameraX > c.width || p.x - cameraX + drawW < 0) return
+
+  if (typeof p.frame !== "number") p.frame = 0
+
+  const img = particleImgs[p.type]
+  if(!img || !img.complete) return
+
+  const frame = Math.floor(p.frame) % frames
+
+  const drawX = (p.x - cameraX) | 0
+  const drawY = (p.y - drawH - cameraY) | 0
+
+  ctx.drawImage(
+    img,
+    0,
+    frame * fh,
+    fw,
+    fh,
+    drawX,
+    drawY,
+    drawW,
+    drawH
+  )
+
+  p.frame += 0.1
+  p.time += 0.1
+}
+
+const buffImage = new Image()
+    buffImage.src = "https://i.imgur.com/ETwRWV4.png"
+    
+const uiImgs = {
+    downActive: new Image(),
+    downUnactive: new Image(),
+    upActive: new Image(),
+    upUnactive: new Image()
+}
+
+uiImgs.downActive.src = "https://i.imgur.com/1MJI0Is.png"
+uiImgs.downUnactive.src = "https://i.imgur.com/VTC6KPX.png"
+uiImgs.upActive.src = "https://i.imgur.com/IhlqLj5.png"
+uiImgs.upUnactive.src = "https://i.imgur.com/vtjLlyW.png"
+
+function drawUi(){
+    const downImg = keys.down ? uiImgs.downActive : uiImgs.downUnactive
+    ctx.drawImage(
+            downImg,
+            0, 0, 32, 32,
+            326,
+            638,
+            32,
+            32
+        )
+        
+       const upImg = keys.up ? uiImgs.upActive : uiImgs.upUnactive
+    ctx.drawImage(
+            upImg,
+            0, 0, 32, 32,
+            358,
+            638,
+            32,
+            32
+        )
+}
+
+    
+    
+function draw(){
+  if (state === "startScreen") return
+ctx.clearRect(0,0,c.width,c.height)
+
+const bgW = 128 * scale;
+const bgH = 512 * scale;
+
+const bgOffsetX = -(cameraX * 0.5) % bgW;
+const bgOffsetY = -(cameraY * 0.5) % bgH;
+
+ctx.drawImage(skyImg,0,0,bgW,bgH)
+
+for (let x = bgOffsetX; x < c.width; x += bgW) {
+    ctx.drawImage(bgImg, x, bgOffsetY, bgW, bgH);
+}
+
+platforms.forEach(p => {
+if(!isOnScreen(p,100)) return
+drawPlatform(p)
+})
+
+topPlatforms.forEach(p => {
+if(!isOnScreen(p,100)) return
+
+drawPlatform(p)
+})
+
+bigProps.forEach(p=>{
+  if (!p.onTopPlatform) return
+  const tileW = 64 * eneScale
+  const tileH = 128 * eneScale
+
+  const bounds = {
+    x:p.x,
+    y:p.y - tileH,
+    w:tileW,
+    h:tileH
+  }
+
+  if(!isOnScreen(bounds,200)) return
+
+  if(!p.gif){
+    const img = propsImgs[p.type] || propsImgs.none
+    if(!img || !img.complete) return
+
+    const drawX = (p.x - cameraX) | 0
+    const drawY = (p.y - tileH - cameraY) | 0
+
+     ctx.drawImage(img, 0, 0, 64, 128, drawX, drawY, tileW, tileH)
+  }
+  else drawPropGif(p)
+
+})
+
+props.forEach(p=>{
+  if (!p.onTopPlatform) return
+  const tileW = 64 * propScale
+  const tileH = 128 * propScale
+
+  const bounds = {
+    x:p.x,
+    y:p.y - tileH,
+    w:tileW,
+    h:tileH
+  }
+
+  if(!isOnScreen(bounds,100)) return
+
+  if(!p.gif){
+    const img = propsImgs[p.type] || propsImgs.none
+    if(!img || !img.complete) return
+
+    const drawX = (p.x - cameraX) | 0
+    const drawY = (p.y - tileH - cameraY) | 0
+
+     ctx.drawImage(img, 0, 0, 64, 128, drawX, drawY, tileW, tileH)
+  }
+  else drawPropGif(p)
+
+})
+
+if (player.onTopPlatform) drawPlayer(player)
+
+topPlatforms.forEach(p => {
+if(!isOnScreen(p,100)) return
+
+ctx.save()
+ctx.filter = "brightness(0.65)"
+drawPlatformBottom(p)
+ctx.restore()
+})
+
+bigProps.forEach(p=>{
+  if (p.onTopPlatform) return
+  const tileW = 64 * eneScale
+  const tileH = 128 * eneScale
+
+  const bounds = {
+    x:p.x,
+    y:p.y - tileH,
+    w:tileW,
+    h:tileH
+  }
+
+  if(!isOnScreen(bounds,200)) return
+
+  if(!p.gif){
+    const img = propsImgs[p.type] || propsImgs.none
+    if(!img || !img.complete) return
+
+    const drawX = (p.x - cameraX) | 0
+    const drawY = (p.y - tileH - cameraY) | 0
+
+     ctx.drawImage(img, 0, 0, 64, 128, drawX, drawY, tileW, tileH)
+  }
+  else drawPropGif(p)
+
+})
+
+props.forEach(p=>{
+  if (p.onTopPlatform) return
+  const tileW = 64 * propScale
+  const tileH = 128 * propScale
+
+  const bounds = {
+    x:p.x,
+    y:p.y - tileH,
+    w:tileW,
+    h:tileH
+  }
+
+  if(!isOnScreen(bounds,50)) return
+
+  if(!p.gif){
+    const img = propsImgs[p.type] || propsImgs.none
+    if(!img || !img.complete) return
+
+    const drawX = (p.x - cameraX) | 0
+    const drawY = (p.y - tileH - cameraY) | 0
+
+     ctx.drawImage(img, 0, 0, 64, 128, drawX, drawY, tileW, tileH)
+  }
+  else drawPropGif(p)
+
+})
+
+drawStartExit()
+
+pasteis.forEach(p => {
+    ctx.drawImage(
+            buffImage,
+            0, 0, 16, 16,
+            p.x - cameraX,
+            p.y - cameraY,
+            (16 * objScale),
+            (16 * objScale)
+        )
+})
+
+enemiesPexeira.forEach(pe => {
+if (pe.state === "dead" || !isOnScreen(pe,50)) return
+drawEnemy(pe)
+})
+
+
+
+enemiesRosal.forEach(r => {
+if (r.state === "dead" || !isOnScreen(r,50)) return
+drawEnemy(r)
+})
+
+if (!player.onTopPlatform) drawPlayer(player)
+
+spikes.forEach(s=>{
+  if(!isOnScreen(s,50)) return
+  drawSpikes(s)
+})
+
+ctx.fillStyle="yellow"
+bullets.forEach(b=>{
+  if(!isOnScreen(b,20)) return
+  ctx.fillRect(b.x-cameraX,b.y-cameraY,b.w,b.h)
+})
+
+platforms.forEach(p=>{
+  if(!isOnScreen(p,50)) return
+  drawPlatformBottom(p)
+})
+
+if(isOnScreen(checkpoint,200) && checkpointImg.complete) {
+
+  const checkpointTileW = 64 * checkpointScale
+  const checkpointTileH = 64 * checkpointScale
+
+    const checkpointDrawX = (checkpoint.x - 8*checkpointScale - cameraX) | 0
+    const checkpointDrawY = ((checkpoint.y + checkpoint.h)  - checkpointTileH - cameraY) | 0
+
+     ctx.drawImage(checkpointImg, 0, 0, 64, 64, checkpointDrawX, checkpointDrawY, checkpointTileW, checkpointTileH)
+}
+
+frontProps.forEach(p=>{
+  const tileW = 64 * propScale
+  const tileH = 128 * propScale
+
+  const bounds = {
+    x:p.x,
+    y:p.y - tileH,
+    w:tileW,
+    h:tileH
+  }
+
+  if(!isOnScreen(bounds,50)) return
+
+  if(!p.gif){
+    const img = propsImgs[p.type] || propsImgs.none
+    if(!img || !img.complete) return
+
+    const drawX = (p.x - cameraX) | 0
+    const drawY = (p.y - tileH - cameraY) | 0
+
+     ctx.drawImage(img, 0, 0, 64, 128, drawX, drawY, tileW, tileH)
+  }
+  else drawPropGif(p)
+
+})
+
+enemiesPexeira.forEach(pe=>{
+  if(pe.state !== "dead" || !isOnScreen(pe,50)) return
+  drawEnemy(pe)
+})
+
+enemiesRosal.forEach(r=>{
+  if(r.state !== "dead" || !isOnScreen(r,50)) return
+  drawEnemy(r)
+})
+
+particles.forEach(p=>{
+  drawParticle(p)
+})
+
+  ctx.fillStyle = "#fff"
+  ctx.font = "38px Arial"
+
+  ctx.textAlign = "left"
+  ctx.textBaseline = "bottom"
+  
+  if (fadeAlpha > 0) {
+  ctx.fillStyle = `rgba(0,0,0,${fadeAlpha})`
+  ctx.fillRect(0,0,c.width,c.height)
+  }
+  
+  drawUi()
+}
+
+function startScreen() {
+    stopSounds()
+    state = "startScreen"
+
+    ctx.fillStyle = "#000"
+    ctx.fillRect(0, 0, c.width, c.height)
+
+    ctx.fillStyle = "#fff"
+    ctx.font = "38px Arial"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+
+    const dx = c.width / 2
+    const dy = c.height / 2
+
+    ctx.fillText("Toque em qualquer", dx, dy - 30)
+    ctx.fillText("lugar para jogar...", dx, dy + 30)
+}
+
+function demoFinished() {
+    stopSounds()
+    state = "demo"
+
+    ctx.fillStyle = "#000"
+    ctx.fillRect(0, 0, c.width, c.height)
+
+    ctx.fillStyle = "#fff"
+    ctx.font = "38px Arial"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+
+    const dx = c.width / 2
+    const dy = c.height / 2
+
+    ctx.fillText("Parabéns!!", dx, dy - 30)
+    ctx.fillText("Você finalizou a demo :)", dx, dy + 30)
+    ctx.fillText("Reinicie se quiser jogar de novo..", dx, dy + 60)
+}
+
+function loop(){
+
+  if(state === "startScreen"){
+    startScreen()
+  }
+  else if(state === "demo"){
+    demoFinished()
+  }
+  else if(state !== "paused"){
+    update()
+    draw()
+  }
+
+  requestAnimationFrame(loop)
+}
+
+startScreen()
+</script>
+</body>
+</html>
