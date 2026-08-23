@@ -1,7 +1,7 @@
 {
   "music": "splash_swing",
-  "bgSrc": "https://i.imgur.com/3TkfuSp.png",
-  "skySrc": "https://i.imgur.com/RvA6ond.png",
+  "bgSrc": "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/backgrounds/river/bgNoon.png",
+  "skySrc": "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/backgrounds/river/skyNoon.png",
   "player": { "x": 50, "y": 410 },
   "startPlat": { "x": 0, "y": 460 },
   "exitPlat": { "x": 16320, "y": 452 },
