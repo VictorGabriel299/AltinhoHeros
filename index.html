@@ -594,21 +594,64 @@ if (!playerId) {
   localStorage.setItem("playerId", playerId)
 }
 
+let lastInputs=[]
+const powerInputs=[
+   {code:["L","R","U","S","H"],action:()=>maxActualLevel=69000},
+   {code:["D","A","L","A","R"],action:()=>coins=Infinity},
+   {code:["A","L","A","D","U"],action:()=>lives=Infinity},
+   {code:["U","R","R","U","U"],action:exit},
+   {code:["S","H","A","U","U"],action:goToMap},
+   {code:["A","H","R","R","A"],action:()=>{
+       audios.pastelEat.currentTime=0.2
+       audios.pastelEat.play()
+       player.immortal=true
+       player.immortalTime=Infinity
+       createParticle("checkpointStars", 5, player.x+player.w/2, player.y+player.h/2, sort(-1,1,true), sort(-1,1,true))
+       toggleNpc()
+     }
+   },
+   {code:["A","H","R","R","H"],action:()=>{
+       toggleJeff()
+       player.powerUpTime=Infinity
+     }
+   },
+    
+]
+
+function checkCodes(){
+    for(let i=0; i<powerInputs.length; i++){
+      const input=powerInputs[i]
+      const code=input.code
+      let res=true
+      for(let i=0; i<5; i++){
+        if(lastInputs[i]!==code[i]){
+          res=false
+          break
+        }
+      }
+      if(res){
+        input.action()
+        lastInputs=[]
+        break
+      }
+    }
+}
+
 let keys={left:false,right:false,up:false,down:false,jump:false,run:false,hold:false,pause:false}
 
-left.ontouchstart=()=>keys.left=true
+left.ontouchstart=()=>{keys.left=true; lastInputs.push("L"); if(lastInputs.length>5)lastInputs.shift()}
 left.ontouchend=()=>keys.left=false
 
-up.ontouchstart=()=>keys.up=true
+up.ontouchstart=()=>{keys.up=true; lastInputs.push("U"); if(lastInputs.length>5)lastInputs.shift()}
 up.ontouchend=()=>keys.up=false
 
-down.ontouchstart=()=>keys.down=true
+down.ontouchstart=()=>{keys.down=true; lastInputs.push("D"); if(lastInputs.length>5)lastInputs.shift()}
 down.ontouchend=()=>keys.down=false
 
-right.ontouchstart=()=>keys.right=true
+right.ontouchstart=()=>{keys.right=true; lastInputs.push("R"); if(lastInputs.length>5)lastInputs.shift()}
 right.ontouchend=()=>keys.right=false
 
-jump.ontouchstart=()=>keys.jump=true
+jump.ontouchstart=()=>{keys.jump=true; lastInputs.push("J"); if(lastInputs.length>5)lastInputs.shift()}
 jump.ontouchend=()=>keys.jump=false
 
 document.addEventListener("keydown", (e) => {
@@ -616,29 +659,41 @@ document.addEventListener("keydown", (e) => {
     case "ArrowLeft":
     case "KeyA":
       keys.left = true
+      lastInputs.push("L")
+      if(lastInputs.length>5)lastInputs.shift()
       break
 
     case "ArrowRight":
     case "KeyD":
       keys.right = true
+      lastInputs.push("R")
+      if(lastInputs.length>5)lastInputs.shift()
       break
 
     case "ArrowUp":
     case "KeyW":
       keys.up = true
+      lastInputs.push("U")
+      if(lastInputs.length>5)lastInputs.shift()
       break
 
     case "ArrowDown":
     case "KeyS":
       keys.down = true
+      lastInputs.push("D")
+      if(lastInputs.length>5)lastInputs.shift()
       break
 
     case "Space":
-    case "keyJ":
+    case "Enter":
+    case "KeyJ":
       keys.jump = true
+      lastInputs.push("J")
+      if(lastInputs.length>5)lastInputs.shift()
       break
       
     case "CapsLock":
+    case "KeyR":
        toggleKey("run")
        break
        
@@ -648,20 +703,20 @@ document.addEventListener("keydown", (e) => {
        run.style.backgroundImage = "url('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/runOn.png')"
        break
     
-    case "keyE":
-    case "keyF":
-    case "keyH":
+    case "KeyE":
+    case "KeyF":
+    case "KeyH":
        toggleKey("hold")
        break
     
     case "ControlLeft":
     case "ControlRight":
-    case "keyQ":
+    case "KeyQ":
        ability()
        break
 
     case "Escape":
-    case "keyP":
+    case "KeyP":
       pause()
       break
   }
@@ -690,6 +745,8 @@ document.addEventListener("keyup", (e) => {
       break
 
     case "Space":
+    case "Enter":
+    case "KeyJ":
       keys.jump = false
       break
       
@@ -702,6 +759,8 @@ document.addEventListener("keyup", (e) => {
 })
 
 function toggleKey(key) {
+  lastInputs.push(key==="hold"?"H":"S")
+  if(lastInputs.length>5)lastInputs.shift()
   keys[key] = !keys[key]
   
   if(key === "run"){
@@ -766,6 +825,9 @@ function pause() {
 }
 
 function ability(){
+  lastInputs.push("A")
+  if(lastInputs.length>5)lastInputs.shift()
+  
   if(!player.move)return
   if(player.mode==="npc"&&!player.immortal){
       if(!inventory||levels.levels[level].lockInventory)return
@@ -792,6 +854,16 @@ function ability(){
         const attackDist = attackDistLinear**2
         
         enemiesPexeira.filter(enemy => {
+             const distX = player.x-enemy.x
+             const distY = player.y-enemy.y
+             return distX*distX + distY*distY <= attackDist
+        }).forEach(killEnemy)
+        enemiesFeixe.filter(enemy => {
+             const distX = player.x-enemy.x
+             const distY = player.y-enemy.y
+             return distX*distX + distY*distY <= attackDist
+        }).forEach(killEnemy)
+        enemiesSnerm.filter(enemy => {
              const distX = player.x-enemy.x
              const distY = player.y-enemy.y
              return distX*distX + distY*distY <= attackDist
@@ -831,7 +903,7 @@ function ability(){
   }
 }
 
-let initialized = false
+let initialized=false
 
 function initialization(){
 
@@ -845,16 +917,18 @@ function initialization(){
 
     Object.values(allAudios).forEach(audio => {
       if (audio instanceof Audio) {
+        asset.muted=true
         audio.play()
           .then(() => {
             audio.pause()
             audio.currentTime = 0
+            asset.muted=false
           })
           .catch(() => {})
       }
     })
   }
-
+  
   coins=0
   lives=5
   inventory=null
@@ -1046,7 +1120,7 @@ function distanceFromGround(x, y, w){
 }
 
 function createParticle(type, duration, x, y, vx = 0, vy = 0) {
-     particles.push({ type: type, time: 0, duration: duration, frame: 0, x: x, y: y, vx: vx, vy: vy })
+     particles.push({ type: type, time: 0, duration: duration, frame: 0, x: x, y: y, vx: vx, vy: vy, w:16*propScale, h:16*propScale })
 }
 
 function despawnAllEnemies(){
@@ -1054,6 +1128,8 @@ function despawnAllEnemies(){
     enemiesRosal = []
     bullets = []
     enemiesTongoloide = []
+    enemiesFeixe = []
+    enemiesSnerm = []
 }
 
 function killAllEnemies(){
@@ -1077,6 +1153,44 @@ function killAllEnemies(){
             enemy.animFrame = 0
             enemy.state = "dead"
     })
+    
+    enemiesFeixe.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+    
+    enemiesSnerm.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+}
+
+function enemyVel(enemy,axis,getVel=false){
+    const vel=enemy["v"+axis]
+    let pos=enemy[axis]
+    let res=0
+    if(typeof vel==="number")res=vel
+    else if(vel.startsWith("sin")){
+      const match=vel.match(/^sin\(t(?:\/(-?[\d.]+))?\)(?:\*(-?[\d.]+))?$/)
+      pos=enemy["base"+axis]
+      res=Math.sin(gameTime/Number(match[1]??1))*Number(match[2]??1)
+    }
+    else if(vel.startsWith("cos")){
+      const match=vel.match(/^cos\(t(?:\/(-?[\d.]+))?\)(?:\*(-?[\d.]+))?$/)
+      pos=enemy["base"+axis]
+      res=Math.cos(gameTime/Number(match[1]??1))*Number(match[2]??1)
+    }
+    else if(vel.startsWith("dist")){
+      const match=vel.match(/^dist<(-?[\d.]+)\?(-?[\d.]+)(?::(-?[\d.]+))?$/)
+      const distSqr=(enemy.x-player.x)**2+(enemy.y-player.y)**2
+      res=distSqr<Number(match[1])**2?Number(match[2]):Number(match[3]??0)
+    }
+    if(getVel)return res
+    else enemy[axis]=pos+res
 }
 
 function killEnemy(enemy){
@@ -1096,6 +1210,8 @@ function spawnEnemy(array,pos,options={}){
           
           x:pos.x,
           y:pos.y,
+          basex:pos.x,
+          basey:pos.y,
           
           vx:options.vx??0,
           vy:options.vy??0,
@@ -1117,7 +1233,8 @@ function spawnEnemy(array,pos,options={}){
           x:pos.x,
           y:pos.y,
           
-          vy:options.vy??0,
+          vy:0,
+          vx:0,
           
           w:38,
           h:88,
@@ -1137,6 +1254,8 @@ function spawnEnemy(array,pos,options={}){
           
           x:pos.x,
           y:pos.y,
+          basex:pos.x,
+          basey:pos.y,
           
           vx:options.vx??0,
           vy:options.vy??0,
@@ -1146,6 +1265,27 @@ function spawnEnemy(array,pos,options={}){
           
           onGround:false,
           img: enemyImgs.tongoloide,
+          state:"walking",
+          animFrame:0,
+          prev:{}
+       })
+       break
+       case enemiesFeixe:
+       array.push({
+         alwaysLoad:false,
+          
+          x:pos.x,
+          y:pos.y,
+          basex:pos.x,
+          basey:pos.y,
+          
+          vx:options.vx??0,
+          vy:options.vy??0,
+          
+          w:69,
+          h:40,
+          
+          img: enemyImgs.feixe,
           state:"walking",
           animFrame:0,
           prev:{}
@@ -1252,7 +1392,7 @@ function goToMap(){
 }
 
 // reset level
-let player, prevFramePlayer,dialog,checkpoint,platforms,topPlatforms, walkways,houses,enemiesPexeira,enemiesRosal,enemiesTongoloide,enemiesMamute,tomato,pasteis,powerups, props,lights,bullets, particles, flags
+let player, prevFramePlayer,dialog,checkpoint,platforms,topPlatforms, walkways,houses,enemiesPexeira,enemiesRosal,enemiesTongoloide,enemiesMamute,enemiesFeixe,enemiesSnerm,tomato,pasteis,powerups, props,lights,bullets, particles, flags
 let cameraX=0
 let cameraY=0
 let shakeTime = 0
@@ -1288,16 +1428,7 @@ keys.pause=false
 
 bgImg.src = levelData.bgSrc || ""
 skyImg.src = levelData.skySrc || ""
-
-if (levelData.music === "favela_ambience") {
-  musics.favelaAmbience.play()
-} else if (levelData.music === "suburbs_shuffle") {
-  musics.suburbsShuffle.play()
-} else if (levelData.music === "gym_grind") {
-  musics.gymGrind.play()
-} else if (levelData.music === "sergs_soundtrack") {
-  musics.SergsSoundtrack.play()
-}
+musics[levelData.music].play()
 
 player={
   x: checkpoints[level] ? Math.round(levelData.checkpoint?.x + 145/2) : levelData.player?.x ?? 0,
@@ -1396,6 +1527,8 @@ enemiesPexeira = (levelData.pexeira || []).map(pe => ({
   h:88,
   vx:pe.vx,
   vy:0,
+  basex:pe.x,
+  basex:pe.y,
   onGround:false,
   img: enemyImgs.pexeira,
   state:"walking",
@@ -1409,6 +1542,8 @@ enemiesRosal = (levelData.rosal || []).map(e => ({
   y:e.y,
   w:38,
   h:88,
+  vx:0,
+  vy:0,
   img: enemyImgs.rosal,
   state:"walking",
   animFrame:0,
@@ -1427,6 +1562,8 @@ enemiesTongoloide = (levelData.tongoloide || []).map(pe => ({
   h:88,
   vx:pe.vx,
   vy:0,
+  basex:pe.x,
+  basey:pe.y,
   onGround:false,
   img: enemyImgs.tongoloide,
   state:"walking",
@@ -1438,11 +1575,45 @@ enemiesMamute = (levelData.mamute || []).map(b => ({
   alwaysLoad:b.alwaysLoad ?? false,
   x:b.x,
   y:b.y,
+  vx:0,
   w:55,
   h:95,
   img: enemyImgs.mamute,
   state:"walking",
   animFrame:0
+}))
+
+enemiesFeixe = (levelData.feixe || []).map(f => ({
+  alwaysLoad:f.alwaysLoad ?? false,
+  flipped:f.flipped??false,
+  x:f.x,
+  y:f.y,
+  w:69,
+  h:40,
+  vx:f.vx??0,
+  vy:f.vy??0,
+  basex:f.x,
+  basey:f.y,
+  img: enemyImgs.feixe,
+  state:"walking",
+  animFrame:0,
+  prev:{},
+}))
+
+enemiesSnerm = (levelData.snerm || []).map(s => ({
+  alwaysLoad:s.alwaysLoad ?? false,
+  x:s.x,
+  y:s.y,
+  w:20,
+  h:100,
+  vy:s.vy??0,
+  vx:0,
+  basey:s.y-(s.h||1),
+  ampl:s.h||1,
+  img: enemyImgs.snerm,
+  state:"walking",
+  animFrame:0,
+  prev:{},
 }))
 
 items = (levelData.items || []).map(i => ({
@@ -1782,7 +1953,7 @@ function enemiesHit(){
     let killed = false
     let coinAdd = 0
     
-    let sound = { pexeira:false, tongoloide: false }
+    let sound = { pexeira:false,tongoloide:false,feixe:false,snerm:false }
     
     enemiesPexeira.forEach(enemy=>{
          if(enemy.dead||died)return
@@ -1859,6 +2030,54 @@ function enemiesHit(){
          }
     })
     
+    if(!died) enemiesFeixe.forEach(enemy=>{
+         if(enemy.dead||died)return
+         if(
+           player.y+player.h>enemy.y &&
+           player.y<enemy.y+enemy.h &&
+           prevFramePlayer.x+player.w>enemy.x &&
+           prevFramePlayer.x<enemy.x+enemy.w
+         ){
+         if(!player.immortal&&player.mode==="npc"){
+            died = true
+            return
+         }
+         
+         enemy.dead=true
+         enemy.animFrame = 0
+         enemy.state = "dead"
+         enemy.vy=0
+         if(!killed)killed=true
+         if(!sound.feixe)sound.feixe=true
+         if(player.immortal)createParticle("checkpointStars", 5, enemy.x, enemy.y, sort(-1,1,true), sort(-1,1,true))
+         coinAdd+=20
+         }
+    })
+    
+    if(!died)enemiesSnerm.forEach(enemy=>{
+         if(enemy.dead||died)return
+         if(
+           player.y+player.h>enemy.y &&
+           player.y<enemy.y+enemy.h &&
+           prevFramePlayer.x+player.w>enemy.x &&
+           prevFramePlayer.x<enemy.x+enemy.w
+         ){
+         if(!player.immortal&&player.mode==="npc"){
+            died = true
+            return
+         }
+         
+         enemy.dead=true
+         enemy.animFrame = 0
+         enemy.state = "dead"
+         enemy.vy=0
+         if(!killed)killed=true
+         if(!sound.snerm)sound.snerm=true
+         if(player.immortal)createParticle("checkpointStars", 5, enemy.x, enemy.y, sort(-1,1,true), sort(-1,1,true))
+         coinAdd+=20
+         }
+    })
+    
     if(!died)enemiesRosal.forEach(enemy=>{
          if(enemy.dead||died)return
          if (
@@ -1929,6 +2148,16 @@ function enemiesHit(){
       audios.tongoloideHurt.currentTime=0
       audios.tongoloideHurt.play()
     }
+    if(sound.feixe){
+      audios.feixeHurt.pause()
+      audios.feixeHurt.currentTime=0
+      audios.feixeHurt.play()
+    }
+    if(sound.snerm){
+      audios.snermHurt.pause()
+      audios.snermHurt.currentTime=0
+      audios.snermHurt.play()
+    }
     
     if(!died)coins+=coinAdd*(levelData.coinMod??1)
     if(stomp){
@@ -1942,7 +2171,7 @@ function enemiesHit(){
              audios.pastelDash.currentTime = 0
              audios.pastelDash.play()
           }
-          player.pastelBoost = 40
+          player.pastelBoost = 60
       } else if(player.mode==="bigJeff")audios.jeffBounce.play()
     }
   else if(died)die({ cause:"enemy", coinLoss: 20 })
@@ -2010,7 +2239,6 @@ let lastPlatformY = Infinity
 // update
 function update(){
   prevFramePlayer = { ...player }
-  devText = ``
   if(dialog.dialog)player.move=false
   
   if (state === "startScreen" || state === "map") return
@@ -2044,12 +2272,19 @@ else {
     else player.state = "idle"
     }
 }
+
+const waterLevel=levelData?.water?.y??Infinity
+const depth=Math.max((player.y+player.h)-waterLevel,0)
+const waterDrag=Math.max(0.85,1-depth/player.h)
+
+checkCodes()
   
 player.vx=0
 if(keys.left && player.move)player.vx = (keys["run"] ? -2 : 0) + (player.mode === "bigJeff" ? -10 : player.immortal ? -6 : -4)
 if(keys.right && player.move) player.vx = (keys["run"] ? 2 : 0) + (player.mode === "bigJeff" ? 10 : player.immortal ? 6 : 4)
+if(depth)player.vx+=-(levelData?.water?.flow??0)
 
-if(keys.jump&&(player.onGround || player.pastelBoost) && player.move){
+if(keys.jump&&(player.onGround || player.pastelBoost||depth>6) && player.move){
 if(player.mode === "deives") audios.jump.play()
 player.vy=-13
 player.onGround=false
@@ -2082,6 +2317,10 @@ if(dialog.dialog){
 }
 
 player.vy+=gravity
+
+player.vx*=waterDrag
+player.vy*=waterDrag
+
 player.pastelBoost=player.pastelBoost>5?player.pastelBoost-5:0
 player.x+=player.pastelBoost?(player.vx + player.pastelBoost)*(flipPlayer ? -1 : 1):player.vx
 if (player.x < 0) player.x = 0
@@ -2355,8 +2594,15 @@ enemiesPexeira.forEach((enemy,i)=>{
     return
   }
   
+  const eDepth=Math.max((enemy.y+enemy.h)-waterLevel,0)
+  const eWaterDrag=Math.max(0.85,1-eDepth/enemy.h)
+  
   enemy.vy += gravity
-  enemy.x += typeof enemy.vx === "string" ? eval(enemy.vx) : enemy.vx
+  
+  enemy.vy*=eWaterDrag
+  enemy.vx*=eWaterDrag
+  
+  enemyVel(enemy,"x")
   enemy.y += enemy.vy
   enemy.onGround = false
 
@@ -2397,7 +2643,7 @@ enemiesTongoloide.forEach((enemy,i)=>{
   }
 
   enemy.vy += gravity
-  enemy.x += typeof enemy.vx === "string" ? eval(enemy.vx) : enemy.vx
+  enemyVel(enemy,"x")
   enemy.y += enemy.vy
   enemy.onGround = false
 
@@ -2422,6 +2668,68 @@ walkways.forEach(w=>{
     if(!isNearElement(enemy,h,1000))return
     collisionElement(h,enemy,{ reverseHeight: true })
   })
+})
+
+enemiesFeixe.forEach((enemy,i)=>{
+  if(!isOnScreen(enemy, 1000)){
+    if(enemy.dead)enemiesFeixe.splice(i,1)
+    if(!enemy.alwaysLoad)return
+  }
+  enemy.prev={ x: enemy.x, y: enemy.y }
+
+  if (enemy.dead) {
+    enemy.vy += gravity
+    enemy.y += enemy.vy
+    return
+  }
+  
+  enemyVel(enemy,"x")
+  enemyVel(enemy,"y")
+
+  platforms.forEach(p=>{
+    if(!isNearElement(enemy,p,1000))return
+    collisionElement(p,enemy,{ stroll: true })
+  })
+  
+
+walkways.forEach(w=>{
+  if(!isNearElement(enemy,w,1000))return
+  collisionElement(w,enemy,{ stroll: true })
+})
+
+  
+  topPlatforms.forEach(p=>{
+    if(!isOnScreen(enemy,p,1000))return
+    collisionElement(p,enemy,{ stroll: true, disableLeft: true, disableRight: true })
+  })
+  
+  houses.forEach(h=>{
+    if(!isNearElement(enemy,h,1000))return
+    collisionElement(h,enemy,{ stroll: true, reverseHeight: true })
+  })
+})
+
+enemiesSnerm.forEach((enemy,i)=>{
+  if(!isOnScreen(enemy, 1000)){
+    if(enemy.dead)enemiesSnerm.splice(i,1)
+    if(!enemy.alwaysLoad)return
+  }
+  enemy.prev={ x: enemy.x, y: enemy.y }
+
+  if (enemy.dead) {
+    enemy.vy += gravity
+    enemy.y += enemy.vy
+    return
+  }
+  const s=Math.sin(gameTime*enemy.vy/10)
+  const vel=Math.sign(s)*Math.pow(Math.abs(s),0.75)*enemy.ampl
+  if(enemy.lastVel>0&&vel>=0&&Math.abs(player.x-enemy.x)<=500){
+    audios.snermAttack.pause()
+    audios.snermAttack.currentTime=0
+    audios.snermAttack.play()
+  }
+  enemy.lastVel=vel
+  enemy.y=enemy.basey+vel
 })
 
 enemiesRosal.forEach((enemy,i) => {
@@ -2492,7 +2800,8 @@ for (let i = bullets.length - 1; i >= 0; i--) {
 
 for (let i = particles.length - 1; i >= 0; i--) {
   const p = particles[i]
-  if (p.time >= p.duration) {
+  
+  if (p.time >= p.duration || !isNearScreen(p, 6000)) {
     particles.splice(i, 1)
     continue
   }
@@ -2609,15 +2918,25 @@ inv: new Image(),
 stone1: new Image(),
 dirt1: new Image(),
 dirt2: new Image(),
+dirt3: new Image(),
 wood1: new Image(),
 checkered: new Image(),
+water: new Image(),
+mudWater: new Image(),
+bridgeStn: new Image(),
+grass1: new Image(),
 }
 
 platformImgs.stone1.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/stone1.png"
 platformImgs.dirt1.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/dirt1.png"
 platformImgs.dirt2.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/dirt2.png"
+platformImgs.dirt3.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/dirt3.png"
 platformImgs.wood1.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/wood1.png"
 platformImgs.checkered.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/checkered.png"
+platformImgs.water.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/water/water.png"
+platformImgs.mudWater.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/water/mud.png"
+platformImgs.bridgeStn.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/bridgeStn.png"
+platformImgs.grass1.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/grass1.png"
 
 const houseImgs = [
      {
@@ -2647,13 +2966,17 @@ const enemyImgs = {
     pexeira: new Image(),
     rosal: new Image(),
     tongoloide: new Image(),
-    mamute: new Image()
+    mamute: new Image(),
+    feixe: new Image(),
+    snerm: new Image(),
 }
 
 enemyImgs.pexeira.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/pexeira.png"
 enemyImgs.rosal.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/rosal.png"
 enemyImgs.tongoloide.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/tongoloide.png"
 enemyImgs.mamute.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/mamute.png"
+enemyImgs.feixe.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/feixe.png"
+enemyImgs.snerm.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/snerm.png"
 
 const playersImgs = {
     selector: new Image(),
@@ -2678,6 +3001,8 @@ const propsSrc = {
   bench1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/furniture/bench1.png",
   bush: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bush.png",
   bushFlower: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bushFlower.png",
+  bush2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bush2.png",
+  bushFlower2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bushFlower2.png",
   bushButterfly: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bushButterfly.png",
   palm1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/palm1.png",
   palm2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/palm2.png",
@@ -2687,6 +3012,8 @@ const propsSrc = {
   acacia1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/acacia1.png",
   acacia2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/acacia2.png",
   mimosa1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/mimosa1.png",
+  riverTree1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/riverTree1.png",
+  riverTree2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/riverTree2.png",
   suburbHouse1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/suburbHouse1.png",
   suburbHouse2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/suburbHouse2.png",
   suburbHouse3: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/suburbHouse3.png",
@@ -2774,10 +3101,11 @@ const images = [
 
 let musics = {
     groovyGngJourney:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/groovy_gang_journey.mp3'),
-    favelaAmbience:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/favela_ambience.mp3'),
-    suburbsShuffle:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/suburbs_shuffle.mp3'),
-    gymGrind:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/gym_grind.mp3'),
-    SergsSoundtrack:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/sergs_soundtrack.mp3')
+    favela_ambience:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/favela_ambience.mp3'),
+    suburbs_shuffle:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/suburbs_shuffle.mp3'),
+    gym_grind:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/gym_grind.mp3'),
+    sergs_soundtrack:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/sergs_soundtrack.mp3'),
+    splash_swing:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/splash_swing.mp3')
 }
 
 Object.values(musics).forEach(audio => {
@@ -2798,6 +3126,9 @@ let audios = {
     tongoloideHurt:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/tongoloideHurt.m4a'),
     shot:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/shot.m4a'),
     mamuteYay:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/mamuteYay.m4a'),
+    feixeHurt:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/feixeHurt.m4a'),
+    snermAttack:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/snermAttack.m4a'),
+    snermHurt:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/snermHurt.m4a'),
     
     jeffImpact:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/bigJeff/impact.m4a'),
     jeffAbility:new Audio('https://bigjeffsounds-i1b1sup48r.edgeone.app/jeffSkill.MP4'),
@@ -2838,7 +3169,41 @@ const onAssetLoaded = () => {
     loaded = true
     state = "startScreen"
     startScreen()
-  }
+  } else loading()
+}
+
+for (const asset of assets) {
+    if (asset instanceof HTMLImageElement) {
+        if (asset.complete) {
+            onAssetLoaded();
+        } else {
+            asset.addEventListener("load", onAssetLoaded, { once: true });
+            asset.addEventListener("error", onAssetLoaded, { once: true });
+        }
+    } else if (asset instanceof HTMLAudioElement) {
+        if (asset.readyState >= 3) {
+            onAssetLoaded();
+        } else {
+            asset.addEventListener("canplaythrough", onAssetLoaded, { once: true });
+            asset.addEventListener("error", onAssetLoaded, { once: true });
+        }
+    }
+}
+
+/*
+let loadedCount = 0
+const totalAssets = assets.length
+
+const audioSources = new Map()
+
+const onAssetLoaded = () => {
+  loadedCount++
+  
+  if(loadedCount === totalAssets){
+    loaded = true
+    state = "startScreen"
+    startScreen()
+  } else loading()
 }
 
 for (const asset of assets) {
@@ -2848,14 +3213,18 @@ for (const asset of assets) {
             asset.addEventListener("load", onAssetLoaded, { once: true })
             asset.addEventListener("error", onAssetLoaded, { once: true })
         }
-    } else if(asset instanceof HTMLAudioElement){
-        if(asset.readyState >= 3) onAssetLoaded()
-        else {
-            asset.addEventListener("canplaythrough", onAssetLoaded, { once: true })
-            asset.addEventListener("error", onAssetLoaded, { once: true })
-        }
-    }
+    } else if (asset instanceof HTMLAudioElement) {
+      if (asset.readyState >= 3) onAssetLoaded();
+      else {
+        asset.addEventListener("canplaythrough", onAssetLoaded, { once: true });
+        asset.addEventListener("error", onAssetLoaded, { once: true });
+      }
+      const audioSource = audioCtx.createMediaElementSource(asset);
+      audioSource.connect(audioFilter);
+      audioSources.set(asset, audioSource);
+  }
 }
+*/
 
 // draw
 
@@ -2962,8 +3331,8 @@ function drawWalkwayBottom(p){
     const img = platformImgs[p.type] || platformImgs.stone1
     if(!img || !img.complete) return
 
-    const tileW = 16 * objScale
-    const tileH = p.h * objScale
+    const tileW = 16*objScale
+    const tileH = p.h*objScale
 
     const tiles = Math.round((p.visualW + 26*objScale) / tileW)
 
@@ -2978,11 +3347,11 @@ function drawWalkwayBottom(p){
 
         ctx.drawImage(
             img,
-            sx,40,16,p.h,
+            sx,40,16, Math.floor(p.h/objScale),
             Math.floor(p.x - 6*objScale - cameraX) + i*tileW,
             startY + 40*objScale,
             tileW,
-            tileH
+            p.h
         )
     }
 }
@@ -3042,18 +3411,20 @@ function drawEnemy(enemy,options={}) {
 
     const frames = 4
     const frame = Math.floor(enemy.animFrame || 0) % frames
-    const animY = isDead ? 64 : isIdle ? 128 : 0
+    const animY = isDead ? 65 : isIdle ? 128 : 0
 
     const drawSize = size * eneScale / 2
-    const drawX = (options.center!=="false"?enemy.x - cameraX + enemy.w / 2 - drawSize / 2.2:enemy.x - cameraX)+(options.offsetX??0)
+    const drawX = (options.center!=="false"?enemy.x - cameraX + enemy.w / 2 - drawSize / 2:enemy.x - cameraX)+(options.offsetX??0)
     const drawY = enemy.y + enemy.h - drawSize - cameraY
-    const flip = enemy.flipped||((typeof enemy.vx === "string" ? eval(enemy.vx) : enemy.vx) > 0)
+    
+    const flipX=(enemyVel(enemy,"x",true)>0||enemy.flipped)?-1:1
+    const flipY=options.flipY>0?-1:1
 
     ctx.save()
 
-    if (!isDead && flip) {
-        ctx.translate(drawX + drawSize, drawY)
-        ctx.scale(-1, 1)
+    if (!isDead && (flipX<0||flipY<0)) {
+        ctx.translate(drawX+(flipX<0?drawSize:0), drawY+(flipY<0?drawSize:0))
+        ctx.scale(flipX, flipY)
         ctx.drawImage(
             enemy.img,
             frame * size,
@@ -3415,12 +3786,17 @@ const bgW = 128 * scale
 const bgH = 512 * scale
 
 const bgOffsetX = Math.floor(-(cameraX * 0.5) % bgW)
-const bgOffsetY = Math.floor(-(cameraY * 0.5) % bgH)
+const bgOffsetY = Math.floor(-(cameraY * 0.5))
 
 ctx.drawImage(skyImg,0,0,bgW,bgH)
 
 for (let x = bgOffsetX; x < c.width; x += bgW) {
     ctx.drawImage(bgImg, x, bgOffsetY, bgW, bgH)
+}
+
+if(levelData.water){
+  const waterX = (Math.floor(player.x/(16*objScale))*16-((gameTime*16*(levelData.water.flow??1)/45)%16))*objScale-500*objScale
+  drawPlatform({ type:levelData.water.type, visualW:1000*objScale, y:levelData.water.y, x:waterX })
 }
 
 platforms.forEach(p => {
@@ -3546,6 +3922,11 @@ enemiesTongoloide.forEach(enemy => {
   drawEnemy(enemy)
 })
 
+enemiesFeixe.forEach(enemy => {
+  if (enemy.state === "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
 enemiesRosal.forEach(enemy => {
   if (enemy.state === "dead" || !isOnScreen(enemy, 50)) return
   drawEnemy(enemy)
@@ -3628,12 +4009,51 @@ props.forEach(p=>{
 
 })
 
+enemiesSnerm.forEach(enemy => {
+  if (enemy.state === "dead" || !isOnScreen(enemy, 50)) return
+  const s=Math.sin(gameTime*enemy.vy/10)
+  const offsetY=Math.sign(s)*Math.pow(Math.abs(s),0.75)*enemy.ampl
+  const flipY=offsetY<enemy.lastOffsetY?-1:1
+  enemy.lastOffsetY=offsetY
+  drawEnemy(enemy,{flipY})
+})
+
+if(levelData?.water?.y){
+	let waterY=(levelData.water.y-cameraY+4)||0
+	let t=performance.now()*0.003
+	ctx.filter="blur(1px)"
+	for(let y=waterY;y<c.height;y+=8){
+		let offset=Math.sin(y*0.08+t)*3
+		ctx.drawImage(
+			c,
+			0,y,
+			c.width,8,
+			offset,y,
+			c.width,8
+		)
+	}
+	
+	const waterX = (Math.floor(player.x/(16*objScale))*16-((gameTime*16*levelData.water.flow/45)%16))*objScale-500*objScale
+	drawPlatformBottom({ type:levelData.water.type, visualW:1000*objScale, y:levelData.water.y+4, x:waterX })
+	ctx.filter="none"
+}
+
 enemiesPexeira.forEach(enemy => {
   if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
   drawEnemy(enemy)
 })
 
 enemiesTongoloide.forEach(enemy => {
+  if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesFeixe.forEach(enemy => {
+  if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesSnerm.forEach(enemy => {
   if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
   drawEnemy(enemy)
 })
@@ -3689,6 +4109,7 @@ particles.forEach(p=>{
 function loading() {
     stopSounds()
     state = "loading"
+    ctx.clearRect(0,0,c.width,c.height)
 
     ctx.fillStyle = "#000"
     ctx.fillRect(0, 0, c.width, c.height)
@@ -3704,7 +4125,7 @@ function loading() {
     ctx.fillText("Loading...", dx, dy - 10)
     
     ctx.font = "8px 'Press Start 2P'"
-    ctx.fillText("preparing assets", dx, dy + 10)
+    ctx.fillText(`${Math.floor(loaded/totalAssets*100)/100}% loaded`, dx, dy + 20)
 }
 
 function startScreen() {
@@ -3813,6 +4234,8 @@ let selectTitle = levels.levels[level].title
 
 function worldMap(){
     if(state!=="map")return
+    
+    checkCodes()
     ctx.clearRect(0,0,c.width,c.height)
     
     const mapImg = mapImgs[world]
