@@ -1,0 +1,4775 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<title>Altinho Heros</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #111;
+  touch-action: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+canvas {
+  display: block;
+
+  width: auto;
+  height: 100%;
+
+  margin: 0;
+
+  background-color: #000;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/loading.gif");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+
+  image-rendering: pixelated;
+}
+
+#ui {
+  position: absolute;
+  width: 90vmin;
+  height: 90vmin;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.btn {
+  position: absolute;
+  width: 10%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  image-rendering: pixelated;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#ui {
+  position: absolute;
+  width: 90vmin;
+  height: 90vmin;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.btn {
+  position: absolute;
+  width: 10%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  image-rendering: pixelated;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#left {
+  left: 5%;
+  bottom: 15%;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/left.png");
+}
+
+#up {
+  left: 12.5%;
+  bottom: 22.5%;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/up.png");
+}
+
+#right {
+  left: 20%;
+  bottom: 15%;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/right.png");
+}
+
+#down {
+  left: 12.5%;
+  bottom: 7.5%;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/down.png");
+}
+
+#jump {
+  right: 5%;
+  bottom: 15%;
+  width: 13%;
+  height: auto;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/up.png");
+}
+
+#run {
+  right: 18%;
+  bottom: 15%;
+  width: 8%;
+  height: auto;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/runOff.png");
+}
+
+#hold {
+  right: 18%;
+  bottom: 25%;
+  width: 8%;
+  height: auto;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/holdOff.png");
+}
+
+#ability {
+  right: 8%;
+  bottom: 29%;
+  width: 8%;
+  height: auto;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/ability.png");
+}
+
+#pause {
+  left: 50%;
+  bottom: 3%;
+  transform: translateX(-50%);
+  width: 8%;
+  height: auto;
+  background-image: url("https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/pause.png");
+}
+
+</style>
+
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="ui">
+  <div class="btn" id="left"></div>
+  <div class="btn" id="up"></div>
+  <div class="btn" id="down"></div>
+  <div class="btn" id="right"></div>
+  <div class="btn" id="jump"></div>
+  <div class="btn" id="run" onclick= toggleKey("run")></div>
+  <div class="btn" id="hold" onclick= toggleKey("hold")></div>
+  <div class="btn" id="ability" onclick= ability()></div>
+  <div class="btn" id="pause" onclick=pause()></div>
+</div>
+
+<script>
+
+// Level Datas
+
+const temporaryData = undefined
+
+const gymData = {
+  music: "gym_grind",
+  bgSrc: "",
+  skySrc: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/backgrounds/gym.png",
+  lockCamera:true,
+  lockY:670,
+  startDialog:"gym",
+  coinMod:0,
+
+  player: { x: 50, y: 560 },
+  filter: { r:90, g:87, b:250, a:0.6 },
+  startPlat: { x: 9000, y: 442 },
+  exitPlat: { x: 9000, y: 462 },
+  checkpoint: { x: 9000, y: 422 },
+  tomato: { x: 9000, y: 232 },
+
+  platforms: [
+    { x: -100, y: 670, w: 500, type: "checkered" },
+  ],
+  props:[
+    { x: 58, y: 600, type: "dumbbellRack" },
+    { x: 25, y: 714, type: "halter", front:true },
+    { x: 250, y: 600, type: "gh", gif:true },
+  ],
+  lights: [
+     { x: 0, y: 0, radius: 700, r:90,g:87,b:250,a:0.75 },
+     { x: 670, y: 0, radius: 300, r:90,g:87,b:250,a:0.75 }
+  ]
+}
+
+const sergData = {
+  music: "sergs_soundtrack",
+  bgSrc: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/backgrounds/favela/bgDusk.png",
+  skySrc: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/backgrounds/suburb/skyDusk.png",
+  filter: { r:210, g:156, b:230, a:0.6 },
+  lockCamera:true,
+  lockY:670,
+  startDialog:"serg",
+  coinMod:0,
+
+  player: { x: 50, y: 560 },
+  startPlat: { x: 9000, y: 442 },
+  exitPlat: { x: 9000, y: 462 },
+  checkpoint: { x: 9000, y: 422 },
+  tomato: { x: 9000, y: 232 },
+
+  platforms: [
+    { x: -100, y: 670, w: 500, type: "stone1" },
+  ],
+  props:[
+    { x: 0, y: 600, type: "favelaHouse3", big: true },
+    { x: 315, y: 600, type: "pole1" },
+    { x: -32, y: 600, type: "bench1" },
+    { x: 120, y: 650, type: "sergWall", big: true },
+    { x: 100, y: 600, type: "fridge" },
+    { x: 225, y: 575, type: "deepFryer" },
+    { x: 180, y: 600, type: "serg", gif:true },
+    { x: 120, y: 650, type: "sergTruck", big: true },
+    { x: 165, y: 577, type: "condiments" },
+  ],
+}
+
+const levels = {
+     startLevel: 1,
+     maxLevel: 4,
+     levels: [
+         { level: 0, world: 0, title: 'Store', data: "", lockInventory: false },
+         { level: 1, world: 1, title: 'Altinho Antics', data: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/levelDatas/world1/level1.json", lockInventory: true },
+         { level: 2, world: 1, title: 'Frenzy Favela', data: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/levelDatas/world1/level2.json" },
+         { level: 3, world: 1, title: 'Big Jeff Rampage', data: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/levelDatas/world1/level3.json", lockInventory: true },
+         { level: 4, world: 1, title: 'Pastel Problem', data: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/levelDatas/world1/level4.json" },
+         { level: 5, world: 1, title: 'Una River Rumble', data: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/levelDatas/world1/level5.json" },
+         { level: 6, world: 1, title: 'Forró Fiesta', data: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/levelDatas/world1/level6.json" },
+         { level: 7, world: 1, title: 'King Pastelo Panic', data: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/levelDatas/world1/boss.json" },
+     ]
+}
+
+const stores = [
+   { id: 0, name: "GH's Gym", data: gymData },
+   { id: 1, name: "Serg Snacks", data: sergData },
+   { id: 2, name: "Broder Bookstore", data: {} },
+   { id: 3, name: "O'Clock Travels", data: {} }
+]
+
+let level = levels.startLevel
+let maxActualLevel = levels.startLevel
+let levelTitle = levels.levels[level].title
+let levelData = levels.levels[level].data
+let world = 0
+
+async function loadLevel(lvl=level) {
+  const response = await fetch(levels.levels[lvl].data)
+
+  if (!response.ok) {
+    return
+  }
+
+  levelData = await response.json()
+}
+
+if(!temporaryData)loadLevel()
+else levelData = temporaryData
+
+let checkpoints = Array(levels.levels.length).fill(false)
+let tomatoes = Array(levels.levels.length).fill(false)
+
+// dialogs
+
+const dialogData = {
+  gym: {
+    scenes: {
+      0: {
+        text: "NPC?! What the heck happened for you to show up at my gym? Must've been that mf PC… we gotta hurry and take him down. So, what are you gonna train today?",
+        options: [
+          {
+            text: "Battle Arena 100$",
+            action: ()=>{
+               if(coins<100){
+                  dialog.scene=1
+                  keys.jump=false
+                  return
+               }
+               coins-=100
+               dialog.dialog=""
+               player.move=true
+               flags.battleArena=true
+            }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      },
+      1: {
+        text: "You can't afford that! go find money, you couch potato.",
+        options: [
+          {
+            text: "Go back",
+            action: ()=>{
+               keys.jump=false
+               dialog.scene=0
+            }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      },
+      2: {
+        text: "Noobie! how tf you died on the first rounds?! You ain't getting no shit after that perfomance, work harder next time!",
+        options: [
+          {
+            text: "Battle Arena 100$",
+            action: ()=>{
+               if(coins<100){
+                  dialog.scene=1
+                  keys.jump=false
+                  return
+               }
+               coins-=100
+               dialog.dialog=""
+               player.move=true
+               flags.battleArena=true
+            }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      },
+      3: {
+        text: "You lost the challenge, but don't be mad. You actually managed to survive some rounds, so you're getting some money. Take it.",
+        options: [
+          {
+            text: "Battle Arena 100$",
+            action: ()=>{
+               if(coins<100){
+                  dialog.scene=1
+                  keys.jump=false
+                  return
+               }
+               coins-=100
+               dialog.dialog=""
+               player.move=true
+               flags.battleArena=true
+            }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      },
+      4: {
+        text: "Damn, you actually made it?! I wasn't expecting, ngl. Well, you deserve this reward, take it! Will you continue your train? I'm here to help ya.",
+        options: [
+          {
+            text: "Battle Arena 100$",
+            action: ()=>{
+               if(coins<100){
+                  dialog.scene=1
+                  keys.jump=false
+                  return
+               }
+               coins-=100
+               dialog.dialog=""
+               player.x=50
+               player.y=560
+               player.move=true
+               flags.battleArena=true
+            }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      }
+    }
+  },
+  serg: {
+    scenes: {
+      0: {
+        text: "Woooray!! Ma favorite customar here! What it gonna be today? da usual again, ehh?",
+        options: [
+          {
+            text: "Pastel 100$",
+            action: ()=>{
+               keys.jump=false
+               if(coins<100){
+                  dialog.scene=1
+                  dialog.option=0
+                  return
+               }
+               coins-=100
+               lives++
+            }
+          },
+          {
+            text: "Golden Pastel 600$",
+            action: ()=>{
+               keys.jump=false
+               if(inventory){
+                   dialog.scene=3
+                  dialog.option=0
+                  return
+               }
+               if(coins<600){
+                  dialog.scene=1
+                  dialog.option=0
+                  return
+               }
+               coins-=600
+               inventory="pastel"
+            }
+          },
+          {
+            text: "Burguer 500$",
+            action: ()=>{
+               keys.jump=false
+               if(inventory){
+                   dialog.scene=3
+                  dialog.option=0
+                  return
+               }
+               if(coins<500){
+                  dialog.scene=1
+                  dialog.option=0
+                  return
+               }
+               coins-=500
+               inventory="burguer"
+            }
+          },
+          {
+            text: "--UNKNOWN--",
+            action: ()=>{
+                dialog.scene=2
+                dialog.option=0
+                keys.jump=false
+             }
+          },
+          {
+            text: "--UNKNOWN--",
+            action: ()=>{
+                dialog.scene=2
+                dialog.option=0
+                keys.jump=false
+             }
+          },
+          {
+            text: "--UNKNOWN--",
+            action: ()=>{
+                dialog.scene=2
+                dialog.option=0
+                keys.jump=false
+             }
+          },
+          {
+            text: "--UNKNOWN--",
+            action: ()=>{
+                dialog.scene=2
+                dialog.option=0
+                keys.jump=false
+             }
+          },
+          {
+            text: "--UNKNOWN--",
+            action: ()=>{
+                dialog.scene=2
+                dialog.option=0
+                keys.jump=false
+             }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      },
+      1: {
+        text: "Aw dang! Dat ain’t enough to buy, huh. Please come here when you done, champ.",
+        options: [
+          {
+            text: "Go back",
+            action: ()=>{
+               keys.jump=false
+               dialog.scene=0
+               dialog.option=0
+            }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      },
+      2: {
+        text: "Ehh… I dunno how to cook dis! Go find somethin’ first, den I learn it, yeah?",
+        options: [
+          {
+            text: "Go back",
+            action: ()=>{
+               keys.jump=false
+               dialog.scene=0
+               dialog.option=0
+            }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      },
+      3: {
+        text: "Ahh, yo inventory is full! Pres da ability botton to use it. Yo can still buy pastels tho.",
+        options: [
+          {
+            text: "Pastel 100$",
+            action: ()=>{
+               keys.jump=false
+               if(coins<100){
+                  dialog.scene=1
+                  dialog.option=0
+                  return
+               }
+               coins-=100
+               lives++
+            }
+          },
+          {
+            text: "Exit",
+            action: goToMap
+          }
+        ]
+      }
+    }
+  }
+}
+
+// initialization & inputs
+
+const c=document.getElementById("game")
+const ctx=c.getContext("2d")
+
+c.width = 390
+c.height = 670
+
+ctx.imageSmoothingEnabled=false
+ctx.webkitImageSmoothingEnabled=false
+ctx.mozImageSmoothingEnabled=false
+
+//startScreen
+let state = "loading"
+let loaded=false
+let devText = ""
+
+let fadeAlpha = 0
+let fadeDirection = 0
+let fadeSpeed = 0.03
+let fadeCallback = null
+
+let playerId = localStorage.getItem("playerId")
+
+if (!playerId) {
+  playerId = crypto.randomUUID()
+  localStorage.setItem("playerId", playerId)
+}
+
+let lastInputs=[]
+const powerInputs=[
+   {code:["L","R","U","S","H"],action:()=>maxActualLevel=69000},
+   {code:["D","A","L","A","R"],action:()=>coins=Infinity},
+   {code:["A","L","A","D","U"],action:()=>lives=Infinity},
+   {code:["U","R","R","U","U"],action:exit},
+   {code:["S","H","A","U","U"],action:goToMap},
+   {code:["A","H","R","R","A"],action:()=>{
+       audios.pastelEat.currentTime=0.2
+       audios.pastelEat.play()
+       player.immortal=true
+       player.immortalTime=Infinity
+       createParticle("checkpointStars", 5, player.x+player.w/2, player.y+player.h/2, sort(-1,1,true), sort(-1,1,true))
+       toggleNpc()
+     }
+   },
+   {code:["A","H","R","R","H"],action:()=>{
+       toggleJeff()
+       player.powerUpTime=Infinity
+     }
+   },
+    
+]
+
+function checkCodes(){
+    for(let i=0; i<powerInputs.length; i++){
+      const input=powerInputs[i]
+      const code=input.code
+      let res=true
+      for(let i=0; i<5; i++){
+        if(lastInputs[i]!==code[i]){
+          res=false
+          break
+        }
+      }
+      if(res){
+        input.action()
+        lastInputs=[]
+        break
+      }
+    }
+}
+
+let keys={left:false,right:false,up:false,down:false,jump:false,run:false,hold:false,pause:false}
+
+left.ontouchstart=()=>{keys.left=true; lastInputs.push("L"); if(lastInputs.length>5)lastInputs.shift()}
+left.ontouchend=()=>keys.left=false
+
+up.ontouchstart=()=>{keys.up=true; lastInputs.push("U"); if(lastInputs.length>5)lastInputs.shift()}
+up.ontouchend=()=>keys.up=false
+
+down.ontouchstart=()=>{keys.down=true; lastInputs.push("D"); if(lastInputs.length>5)lastInputs.shift()}
+down.ontouchend=()=>keys.down=false
+
+right.ontouchstart=()=>{keys.right=true; lastInputs.push("R"); if(lastInputs.length>5)lastInputs.shift()}
+right.ontouchend=()=>keys.right=false
+
+jump.ontouchstart=()=>{keys.jump=true; lastInputs.push("J"); if(lastInputs.length>5)lastInputs.shift()}
+jump.ontouchend=()=>keys.jump=false
+
+document.addEventListener("keydown", (e) => {
+  switch (e.code) {
+    case "ArrowLeft":
+    case "KeyA":
+      keys.left = true
+      lastInputs.push("L")
+      if(lastInputs.length>5)lastInputs.shift()
+      break
+
+    case "ArrowRight":
+    case "KeyD":
+      keys.right = true
+      lastInputs.push("R")
+      if(lastInputs.length>5)lastInputs.shift()
+      break
+
+    case "ArrowUp":
+    case "KeyW":
+      keys.up = true
+      lastInputs.push("U")
+      if(lastInputs.length>5)lastInputs.shift()
+      break
+
+    case "ArrowDown":
+    case "KeyS":
+      keys.down = true
+      lastInputs.push("D")
+      if(lastInputs.length>5)lastInputs.shift()
+      break
+
+    case "Space":
+    case "Enter":
+    case "KeyJ":
+      keys.jump = true
+      lastInputs.push("J")
+      if(lastInputs.length>5)lastInputs.shift()
+      break
+      
+    case "CapsLock":
+    case "KeyR":
+       toggleKey("run")
+       break
+       
+    case "ShiftLeft":
+    case "ShiftRight":
+       keys.run = true
+       run.style.backgroundImage = "url('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/runOn.png')"
+       break
+    
+    case "KeyE":
+    case "KeyF":
+    case "KeyH":
+       toggleKey("hold")
+       break
+    
+    case "ControlLeft":
+    case "ControlRight":
+    case "KeyQ":
+       ability()
+       break
+
+    case "Escape":
+    case "KeyP":
+      pause()
+      break
+  }
+})
+
+document.addEventListener("keyup", (e) => {
+  switch (e.code) {
+    case "ArrowLeft":
+    case "KeyA":
+      keys.left = false
+      break
+
+    case "ArrowRight":
+    case "KeyD":
+      keys.right = false
+      break
+      
+    case "ArrowUp":
+    case "KeyW":
+      keys.up = false
+      break
+
+    case "ArrowDown":
+    case "KeyS":
+      keys.down = false
+      break
+
+    case "Space":
+    case "Enter":
+    case "KeyJ":
+      keys.jump = false
+      break
+      
+    case "ShiftLeft":
+    case "ShiftRight":
+       keys.run = false
+       run.style.backgroundImage = "url('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/runOff.png')"
+       break
+  }
+})
+
+function toggleKey(key) {
+  lastInputs.push(key==="hold"?"H":"S")
+  if(lastInputs.length>5)lastInputs.shift()
+  keys[key] = !keys[key]
+  
+  if(key === "run"){
+     if(keys[key]) run.style.backgroundImage = "url('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/runOn.png')"
+     else run.style.backgroundImage = "url('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/runOff.png')"
+  }
+  else if(key === "hold"){
+     if(keys[key]) hold.style.backgroundImage = "url('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/holdOn.png')"
+     else hold.style.backgroundImage = "url('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/holdOff.png')"
+  }
+}
+
+function pause() {
+  if (state !== "game" && state !== "paused") return
+
+  if (state === "game") {
+    state = "paused"
+
+    const cx = c.width / 2
+    const cy = c.height / 2
+    const r = Math.max(c.width, c.height) / 1.2
+
+    const g = ctx.createRadialGradient(
+      cx, cy, r * 0.1,
+      cx, cy, r
+    )
+
+    g.addColorStop(0, "rgba(58, 21, 110, 0.3)")
+    g.addColorStop(0.6, "rgba(24, 12, 69, 0.5)")
+    g.addColorStop(1, "rgba(7, 5, 33, 0.7)")
+
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, c.width, c.height)
+    
+    ctx.strokeStyle = "#303447"
+    ctx.lineWidth = 5
+
+    ctx.fillStyle = "#fff"
+    ctx.font = "32px 'Press Start 2P'"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+     
+     const dx = c.width/2
+     const dy = c.height/2
+     
+    const textGradient = ctx.createLinearGradient(0, dy, 0, dy + 16)
+
+     textGradient.addColorStop(0, "#ffffff")
+     textGradient.addColorStop(0.15, "#c3c8db")
+     textGradient.addColorStop(0.5, "#898fab")
+     textGradient.addColorStop(1, "#5d6380")
+      
+     ctx.fillStyle = textGradient
+     ctx.strokeText("Paused", dx, dy)
+     ctx.fillText("Paused", dx, dy)
+       
+     ctx.shadowBlur = 0
+  }
+  else {
+    state = "game"
+  }
+}
+
+function ability(){
+  lastInputs.push("A")
+  if(lastInputs.length>5)lastInputs.shift()
+  
+  if(!player.move)return
+  if(player.mode==="npc"&&!player.immortal){
+      if(!inventory||levels.levels[level].lockInventory)return
+      audios.pastelEat.currentTime = 0.2
+      audios.pastelEat.play()
+      
+      if(inventory==="pastel"){
+           player.immortal = true
+           player.immortalTime = 400
+           createParticle("checkpointStars", 5, player.x + player.w/2, player.y + player.h/2, sort(-1,1,true), sort(-1,1,true))
+      } else if(inventory==="burguer")toggleJeff()
+      
+      inventory = null
+  }
+  else if(player.onGround && !player.abilityCooldown && player.mode === "bigJeff"){
+        audios.jeffAbility.play()
+        player.state = "ability"
+        player.animFrame = 0
+        
+        shakeCamera(60,10)
+        createParticle("dirtSplash", 5, player.x, player.y+player.h)
+        
+        const attackDistLinear = 200
+        const attackDist = attackDistLinear**2
+        
+        enemiesPexeira.filter(enemy => {
+             const distX = player.x-enemy.x
+             const distY = player.y-enemy.y
+             return distX*distX + distY*distY <= attackDist
+        }).forEach(killEnemy)
+        enemiesFeixe.filter(enemy => {
+             const distX = player.x-enemy.x
+             const distY = player.y-enemy.y
+             return distX*distX + distY*distY <= attackDist
+        }).forEach(killEnemy)
+        enemiesSnerm.filter(enemy => {
+             const distX = player.x-enemy.x
+             const distY = player.y-enemy.y
+             return distX*distX + distY*distY <= attackDist
+        }).forEach(killEnemy)
+        enemiesTongoloide.filter(enemy => {
+             const distX = player.x-enemy.x
+             const distY = player.y-enemy.y
+             return distX*distX + distY*distY <= attackDist
+        }).forEach(killEnemy)
+        enemiesRosal.filter(enemy => {
+             const distX = player.x-enemy.x
+             const distY = player.y-enemy.y
+             return distX*distX + distY*distY <= attackDist
+        }).forEach(killEnemy)
+        
+        for (let i = platforms.length - 1; i >= 0; i--) {
+           const p = platforms[i]
+           if (!p.breakable) continue
+           
+           let distX = Infinity
+           if(player.x < p.x) distX = player.x - p.x
+           else if(player.x > p.x+p.w) distX = player.x - (p.x+p.w)
+           else distX = 0
+           
+           if (Math.abs(distX) <= attackDistLinear && player.y+player.h>p.y) {
+                createParticle("woodBreak", 5, p.x + p.w / 2, player.y)
+                
+                platforms.splice(i, 1)
+           }
+        }
+        
+        player.abilityCooldown = 180
+        player.move = false
+        setTimeout(() => {
+          player.move = true
+        }, 1000)
+  }
+}
+
+let initialized=false
+
+function initialization(){
+
+  if (!initialized) {
+    initialized = true
+
+    audioCtx.resume()
+
+    audioFilter.muted = muteSounds
+    audioFilter.update()
+  }
+  
+  coins=0
+  lives=5
+  inventory=null
+  gameTime=0
+  idleTime=0
+  airTime=0
+  preservedVx=1
+  cameraX=0
+  cameraY=0
+  shakeTime=0
+  shakeStrength=0
+  flipPlayer=false
+  
+  level=levels.startLevel
+  maxActualLevel=level
+  let levelTitle = levels.levels[level].title
+  let levelData = temporaryData||levels.levels[level].data
+  let world = 0
+  if(!temporaryData)loadLevel()
+  
+  selector = {
+    mapId: 0,
+    movingId: 0,
+    warp: "level",
+    id: 0,
+    x: 2,
+    y: 268,
+    anim: 1,
+    flipped: false,
+    moving: false,
+    warping: false
+  }
+  let selectTitle = levels.levels[level].title
+  
+  state = "map"
+  worldMap()
+  loop()
+}
+
+document.addEventListener("touchstart", () => {
+  if (state === "startScreen" || state === "gameover")initialization()
+})
+
+document.addEventListener("keydown", () => {
+  if (state === "startScreen" || state === "gameover")initialization()
+})
+
+document.addEventListener("touchstart", e => {
+  if (e.touches.length > 1) e.preventDefault()
+}, { passive: false })
+
+document.addEventListener("gesturestart", e => e.preventDefault())
+
+document.addEventListener("contextmenu", e => e.preventDefault())
+document.addEventListener("selectstart", e => e.preventDefault())
+
+// constants
+
+const gravity=0.7
+let scale=4
+let objScale = 2
+let propScale = 2
+let checkpointScale = 3
+let eneScale = 4
+
+const muteSounds = false
+
+// essentials
+
+function clamp(min,max,x){
+    return Math.max(min, Math.min(max, x))
+}
+
+function lerp(value, target, speed,fix=0.05){
+    const v = value + (target - value) * speed / 100
+    return Math.abs(v - target) <= fix ? target : v
+}
+
+function getLerpTime(value, target, speed){
+    return Math.max(
+        0,
+        Math.log(0.05 / Math.abs(target - value)) /
+        Math.log(1 - speed / 100) /
+        45
+    )
+}
+
+function sort(min, max, nonIntegers = false, maxDPlace = 2) {
+    if (nonIntegers) {
+        const factor = 10**maxDPlace
+        return Math.floor((Math.random() * (max - min) + min) * factor) / factor
+    }
+    return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+function wrapText(text,maxWidth) {
+  const paragraphs = text.split("\n");
+  const lines = [];
+
+  paragraphs.forEach(paragraph => {
+    const words = paragraph.split(" ");
+    let line = "";
+
+    words.forEach((word, i) => {
+      const testLine = line + word + " ";
+      const width = ctx.measureText(testLine).width;
+
+      if (width > maxWidth && i > 0) {
+        lines.push(line);
+        line = word + " ";
+      } else {
+        line = testLine;
+      }
+    });
+
+    lines.push(line);
+  });
+
+  return lines;
+}
+
+function startFade(direction, callback){
+  fadeDirection = direction
+  fadeCallback = callback
+}
+
+function isOnScreen(o,margin = 0){
+  return (
+    o.x + o.w >= cameraX - margin &&
+    o.x <= cameraX + c.width + margin &&
+    o.y + o.h >= cameraY - margin &&
+    o.y <= cameraY + c.height + margin
+  )
+}
+
+function isNearScreen(o,range = 200){
+  return (
+    o.x + o.w >= cameraX - range &&
+    o.x <= cameraX + c.width + range
+  )
+}
+
+function isNearElement(e,o,range = 200){
+  return (
+    o.x + o.w >= e.x - range &&
+    o.x <= e.x + e.w + range
+  )
+}
+
+function shakeCamera(time,intensity){
+    shakeTime = time
+    shakeStrength = intensity ?? 2
+}
+
+function toggleNpc() {
+     player.w = 21
+     player.h = 88
+     player.mode = "npc"
+}
+
+function toggleJeff() {
+     player.powerUpTime+=400
+     player.y -= 10
+     player.w = 45
+     player.h = 98
+     player.mode = "bigJeff"
+}
+
+function distanceFromGround(x, y, w){
+    let dy = Infinity
+
+    const ground = platforms.filter(p =>
+        x + w > p.x && p.x + p.w > x
+    )
+
+    for (let i = 0; i < ground.length; i++){
+        const plat = ground[i]
+        if (plat.y < y) continue
+
+        const platDist = plat.y - y
+
+        if (platDist < dy) {
+            dy = platDist
+        }
+    }
+
+    return dy
+}
+
+function createParticle(type, duration, x, y, vx = 0, vy = 0) {
+     particles.push({ type: type, time: 0, duration: duration, frame: 0, x: x, y: y, vx: vx, vy: vy, w:16*propScale, h:16*propScale })
+}
+
+function despawnAllEnemies(){
+    enemiesPexeira = []
+    enemiesRosal = []
+    bullets = []
+    enemiesTongoloide = []
+    enemiesFeixe = []
+    enemiesSnerm = []
+}
+
+function killAllEnemies(){
+    enemiesPexeira.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+    
+    enemiesRosal.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+    
+    enemiesTongoloide.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+    
+    enemiesFeixe.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+    
+    enemiesSnerm.forEach(enemy=>{
+            if (enemy.dead) return
+            enemy.dead=true
+            enemy.animFrame = 0
+            enemy.state = "dead"
+    })
+}
+
+function enemyVel(enemy,axis,getVel=false){
+    const vel=enemy["v"+axis]
+    let pos=enemy[axis]
+    let res=0
+    if(typeof vel==="number")res=vel
+    else if(vel.startsWith("sin")){
+      const match=vel.match(/^sin\(t(?:\/(-?[\d.]+))?\)(?:\*(-?[\d.]+))?$/)
+      pos=enemy["base"+axis]
+      res=Math.sin(gameTime/Number(match[1]??1))*Number(match[2]??1)
+    }
+    else if(vel.startsWith("cos")){
+      const match=vel.match(/^cos\(t(?:\/(-?[\d.]+))?\)(?:\*(-?[\d.]+))?$/)
+      pos=enemy["base"+axis]
+      res=Math.cos(gameTime/Number(match[1]??1))*Number(match[2]??1)
+    }
+    else if(vel.startsWith("dist")){
+      const match=vel.match(/^dist<(-?[\d.]+)\?(-?[\d.]+)(?::(-?[\d.]+))?$/)
+      const distSqr=(enemy.x-player.x)**2+(enemy.y-player.y)**2
+      res=distSqr<Number(match[1])**2?Number(match[2]):Number(match[3]??0)
+    }
+    if(getVel)return res
+    else enemy[axis]=pos+res
+}
+
+function killEnemy(enemy){
+if (enemy.dead) return
+
+enemy.dead=true
+enemy.animFrame = 0
+enemy.state = "dead"
+return null
+}
+
+function spawnEnemy(array,pos,options={}){
+    switch(array){
+       case enemiesPexeira:
+       array.push({
+         alwaysLoad:false,
+          
+          x:pos.x,
+          y:pos.y,
+          basex:pos.x,
+          basey:pos.y,
+          
+          vx:options.vx??0,
+          vy:options.vy??0,
+          
+          w:48,
+          h:88,
+          
+          onGround:false,
+          img: enemyImgs.pexeira,
+          state:"walking",
+          animFrame:0,
+          prev:{}
+       })
+       break
+       case enemiesRosal:
+       array.push({
+         alwaysLoad:false,
+          
+          x:pos.x,
+          y:pos.y,
+          
+          vy:0,
+          vx:0,
+          
+          w:38,
+          h:88,
+          
+          img: enemyImgs.rosal,
+          state:"idle",
+          animFrame:0,
+          
+          baseCool:options.cooldown ?? 60,
+          cool:options.cooldown ?? 60,
+          bulletTime:options.bulletTime ?? 60,
+       })
+       break
+       case enemiesTongoloide:
+       array.push({
+         alwaysLoad:false,
+          
+          x:pos.x,
+          y:pos.y,
+          basex:pos.x,
+          basey:pos.y,
+          
+          vx:options.vx??0,
+          vy:options.vy??0,
+          
+          w:40,
+          h:88,
+          
+          onGround:false,
+          img: enemyImgs.tongoloide,
+          state:"walking",
+          animFrame:0,
+          prev:{}
+       })
+       break
+       case enemiesFeixe:
+       array.push({
+         alwaysLoad:false,
+          
+          x:pos.x,
+          y:pos.y,
+          basex:pos.x,
+          basey:pos.y,
+          
+          vx:options.vx??0,
+          vy:options.vy??0,
+          
+          w:69,
+          h:40,
+          
+          img: enemyImgs.feixe,
+          state:"walking",
+          animFrame:0,
+          prev:{}
+       })
+       break
+    }
+}
+
+function die(options={}){
+    if(!options.ignoreImmortal&&player.immortal||player.dead)return
+    
+    if(options.cause==="fell"){
+       if(player.immortal){
+         player.vy = -30
+         audios.pastelDash.pause()
+         audios.pastelDash.currentTime = 0
+         audios.pastelDash.play()
+         createParticle("checkpointStars", 5, player.x, player.y, sort(-1,1,true), sort(-1,1,true))
+         return
+      } else {
+         player.state = "falling"
+      }
+    } else {
+        player.vy = -5
+        player.state = "dead"
+    }
+    
+    state = "dead"
+    if(!flags.battleArena){
+       if(lives>0)lives--
+       coins -= options.coinLoss??0
+    }
+    player.dead = true
+    player.move = false
+    
+   stopSounds()
+   audios.defeat.play()
+   audios.defeat.currentTime = 1.25
+   
+   setTimeout(() => {
+        startFade(1, () => {
+             if(!lives)state="gameover"
+             else if(flags.battleArena){
+                 despawnAllEnemies()
+                 dialog.dialog="gym"
+                  if(flags.baRound<4)dialog.scene=2
+                 else dialog.scene=3
+                 dialog.option=0
+                  player.move=false
+                  player.dead=false
+                  player.state = "idle"
+                  player.x=50; player.y=560
+                 state = "game"
+                 if(flags.baRound>3) coins+=flags.baRound*15
+                 flags.battleArena=false
+                 keys.jump=false
+                 flags.baRoundDelay=0
+                 flags.baRound=0
+            } else {
+                state = "map"
+                musics.groovyGngJourney.play()
+                worldMap()
+            }
+            startFade(-1)
+        })
+    }, 5000)
+}
+
+function exit(){
+    stopSounds()
+    killAllEnemies()
+    audios.victory.play()
+    
+    player.state = "comemorating"
+    state = "exit"
+    player.onExit = true
+    player.move = false
+    checkpoints[level] = false
+    coins+=20+Math.floor(1.25*(level-1))
+
+    setTimeout(() => {
+
+        startFade(1, async () => {
+
+            if(level===maxActualLevel)maxActualLevel++
+            
+            state = "map"
+            musics.groovyGngJourney.play()
+            worldMap()
+            startFade(-1)
+
+        })
+    }, 5000)
+}
+
+function goToMap(){
+   startFade(1, async () => {
+      state = "map"
+      stopSounds()
+      musics.groovyGngJourney.play()
+      worldMap()
+      startFade(-1)
+   })
+}
+
+// reset level
+let player, prevFramePlayer,dialog,checkpoint,platforms,topPlatforms, walkways,houses,enemiesPexeira,enemiesRosal,enemiesTongoloide,enemiesMamute,enemiesFeixe,enemiesSnerm,tomato,pasteis,powerups, props,lights,bullets, particles, flags
+let cameraX=0
+let cameraY=0
+let shakeTime = 0
+let shakeStrength = 0
+let flipPlayer = false
+let gameTime = 0
+let lives = 0
+let coins = 0
+let inventory = null
+let idleTime = 0
+let preservedVx = 1
+let airTime = 0
+
+const bgImg=new Image()
+
+const skyImg=new Image()
+
+function stopSounds() {
+    audioFilter.frequency=20000
+    audioFilter.volume=1
+    audioFilter.playbackRate=1
+    audioFilter.detune=0
+    audioFilter.pan=0
+    audioFilter.Q=1
+    audioFilter.filterType="lowpass"
+    audioFilter.update()
+    Object.values(musics).forEach(audio => {
+     audio.pause()
+     audio.currentTime = 0
+   })
+   
+}
+
+function resetLevel(){
+  
+keys.left=false
+keys.right=false
+keys.up=false
+keys.down=false
+keys.jump=false
+keys.pause=false
+
+ audioFilter.frequency=20000
+ audioFilter.volume=1
+ audioFilter.playbackRate=1
+ audioFilter.detune=0
+ audioFilter.pan=0
+ audioFilter.Q=1
+ audioFilter.filterType="lowpass"
+ audioFilter.update()
+
+bgImg.src = levelData.bgSrc || ""
+skyImg.src = levelData.skySrc || ""
+musics[levelData.music].play()
+
+player={
+  x: checkpoints[level] ? Math.round(levelData.checkpoint?.x + 145/2) : levelData.player?.x ?? 0,
+  y: checkpoints[level] ? levelData.checkpoint?.y - 90 : levelData.player?.y ?? 0,
+  w:21,
+  h:88,
+  vx:0,
+  vy:0,
+  
+  onGround:false,
+  onTopPlatform:false,
+  onStackablePlatform:false,
+  immortal:false,
+  move:true,
+  dead:false,
+  onExit:false,
+  mode:"npc",
+  
+  immortalTime:0,
+  pastelBoost: 0,
+  abilityCooldown:0,
+  powerUpTime:0,
+  holding:null,
+  
+  state:"idle",
+  animFrame:0,
+}
+
+prevFramePlayer = { ...player }
+
+dialog = {
+    dialog: levelData.startDialog??"",
+    scene: 0,
+    option: 0,
+    blinkFrame: 0,
+    movingFrame: 0
+}
+
+checkpoint = {
+    x: levelData.checkpoint?.x ?? 0,
+    y: levelData.checkpoint?.y ?? 0,
+    w: 145,
+    h: 75,
+    active: checkpoints[level]
+}
+
+platforms = (levelData.platforms || []).map(p => ({
+  x:p.x,
+  y:p.y,
+  visualW: p.w,
+  w:p.w + 8*objScale,
+  h:670,
+  type: p.type,
+  breakable: p.breakable ?? false,
+  alwaysLoad:p.alwaysLoad??false
+}))
+
+topPlatforms = (levelData.topPlatforms || []).map(p => ({
+  x:p.x,
+  y:p.y,
+  visualW: p.w,
+  visualH:472,
+  w:p.w + 8*objScale,
+  h:670,
+  type: p.type,
+  stackable: p.stackable ?? false,
+  alwaysLoad:p.alwaysLoad??false
+}))
+
+walkways = (levelData.walkways || []).map(p => ({
+  x:p.x,
+  y:p.y,
+  visualW: p.w,
+  w:p.w + 10*objScale,
+  h:p.h,
+  type: p.type,
+  alwaysLoad:p.alwaysLoad??false
+}))
+
+houses = (levelData.house || []).map(h => ({
+  x:h.x,
+  y:h.y,
+  w:64*eneScale,
+  h:(h.floors || 1) * 64*eneScale,
+  floors:h.floors || 1,
+  direction:h.direction || "up",
+  theme:h.theme || "favela",
+  color:new Map()
+}))
+
+enemiesPexeira = (levelData.pexeira || []).map(pe => ({
+  alwaysLoad:pe.alwaysLoad ?? false,
+  x:pe.x,
+  y:pe.y,
+  w:48,
+  h:88,
+  vx:pe.vx,
+  vy:0,
+  basex:pe.x,
+  basex:pe.y,
+  onGround:false,
+  img: enemyImgs.pexeira,
+  state:"walking",
+  animFrame:0,
+  prev:{},
+}))
+
+enemiesRosal = (levelData.rosal || []).map(e => ({
+  alwaysLoad:e.alwaysLoad ?? false,
+  x:e.x,
+  y:e.y,
+  w:38,
+  h:88,
+  vx:0,
+  vy:0,
+  img: enemyImgs.rosal,
+  state:"walking",
+  animFrame:0,
+  baseCool:e.cooldown ?? 60,
+  cool:e.cooldown ?? 60,
+  bulletTime:e.bulletTime ?? 60,
+  vy:0,
+  flipped:e.flipped??false,
+}))
+
+enemiesTongoloide = (levelData.tongoloide || []).map(pe => ({
+  alwaysLoad:pe.alwaysLoad ?? false,
+  x:pe.x,
+  y:pe.y,
+  w:40,
+  h:88,
+  vx:pe.vx,
+  vy:0,
+  basex:pe.x,
+  basey:pe.y,
+  onGround:false,
+  img: enemyImgs.tongoloide,
+  state:"walking",
+  animFrame:0,
+  prev:{},
+}))
+
+enemiesMamute = (levelData.mamute || []).map(b => ({
+  alwaysLoad:b.alwaysLoad ?? false,
+  x:b.x,
+  y:b.y,
+  vx:0,
+  w:55,
+  h:95,
+  img: enemyImgs.mamute,
+  state:"walking",
+  animFrame:0
+}))
+
+enemiesFeixe = (levelData.feixe || []).map(f => ({
+  alwaysLoad:f.alwaysLoad ?? false,
+  flipped:f.flipped??false,
+  x:f.x,
+  y:f.y,
+  w:69,
+  h:40,
+  vx:f.vx??0,
+  vy:f.vy??0,
+  basex:f.x,
+  basey:f.y,
+  img: enemyImgs.feixe,
+  state:"walking",
+  animFrame:0,
+  prev:{},
+}))
+
+enemiesSnerm = (levelData.snerm || []).map(s => ({
+  alwaysLoad:s.alwaysLoad ?? false,
+  x:s.x,
+  y:s.y,
+  w:20,
+  h:100,
+  vy:s.vy??0,
+  vx:0,
+  basey:s.y-(s.h||1),
+  ampl:s.h||1,
+  img: enemyImgs.snerm,
+  state:"walking",
+  animFrame:0,
+  prev:{},
+}))
+
+items = (levelData.items || []).map(i => ({
+  x:i.x,
+  y:i.y,
+  baseY:i.y,
+  type:i.type,
+  w:20,
+  h:20,
+}))
+
+tomato = tomatoes[level] ? {} :
+{
+    x:levelData.tomato?.x??999999,
+    y:levelData.tomato?.y??999999,
+    baseY:levelData.tomato?.y??999999,
+    w:20,
+    h:20
+}
+
+pasteis = (levelData.pasteis || []).map(b => ({
+  x:b.x,
+  y:b.y,
+  baseY:b.y,
+  w:20,
+  h:20,
+  active:true
+}))
+
+powerups = (levelData.powerups || []).map(b => ({
+  x:b.x,
+  y:b.y,
+  baseY:b.y,
+  w:20,
+  h:20,
+  type:b.type,
+  onEat: b.type === "burguer" ? toggleJeff : toggleNpc,
+  newMode: b.ignoreMode ? "none" : b.type === "burguer" ? "bigJeff" : "npc",
+}))
+
+props = (levelData.props || []).map(p => {
+  const obj = { ...p }
+  if (obj.gif) obj.frame = 0
+  return obj
+})
+
+lights = (levelData.lights || []).map(l => ({
+  x:l.x,
+  y:l.y,
+  radius:l.radius,
+  
+  r:l.r,
+  g:l.g,
+  b:l.b,
+  a:l.a,
+}))
+
+bullets=[]
+particles=[]
+
+cameraX = player.x - c.width / 2
+if (cameraX < 0) cameraX = 0
+
+cameraY = player.y - c.height / 2
+if (cameraY < 0) cameraY = 0
+
+flags={
+    level:levelData.levelFlag ?? null,
+    battleArena:false,
+    baRound:0,
+    baRoundDelay:0,
+}
+
+}
+
+// game logic
+
+function rect(a,b){
+return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y
+}
+
+function collision(o,options={}){
+    const p = prevFramePlayer
+    
+    const elasticity = options.elasticity ?? 0
+    const offset = {
+         top: options.offsetTop ?? options.offset ?? 0,
+         down: options.offsetDown ?? options.offset ?? 0,
+         left: options.offsetLeft ?? options.offset ?? 0,
+         right: options.offsetRight ?? options.offset ?? 0,
+    }
+    const box = {
+         top: !options.reverseHeight ? o.y - offset.top : o.y - o.h - offset.top,
+         down: !options.reverseHeight ? o.y + o.h + offset.down : o.y + offset.down,
+         left: o.x - offset.left,
+         right: o.x + o.w + offset.right
+    }
+
+    if(
+        !options.disableTop &&
+        p.y + p.h <= box.top &&
+        player.y + player.h > box.top &&
+        player.x + player.w > box.left &&
+        box.right > player.x
+    ){
+        if(player.mode === "bigJeff" && player.vy >= 15){
+            audios.jeffImpact.play()
+            createParticle("dirtSplash",5,player.x,player.y+player.h)
+            shakeCamera(10,4)
+        }
+        
+        player.y = box.top - player.h
+        player.vy = Math.abs(player.vy * -elasticity) > elasticity ? player.vy * -elasticity : 0
+        player.onGround = true
+        if(options.type==="topPlatform")player.onTopPlatform = true
+        if(options.type==="topPlatformStack"){
+            player.onTopPlatform = true
+            player.onStackablePlatform = true
+        }
+    }
+
+    else if(
+        !options.disableDown &&
+        p.y >= box.down &&
+        player.y < box.down &&
+        player.x + player.w > box.left &&
+        box.right > player.x
+    ){
+        player.y = box.down
+        player.vy = Math.abs(player.vy * -elasticity) > elasticity ? player.vy * -elasticity : 0
+    }
+
+    else if(
+        !options.disableLeft &&
+        p.x + p.w <= box.left &&
+        player.x + player.w > box.left &&
+        player.y + player.h > box.top &&
+        player.y < box.down
+    ){
+        player.x = box.left - player.w
+    }
+
+    else if(
+        !options.disableRight &&
+        p.x >= box.right &&
+        player.x < box.right &&
+        player.y + player.h > box.top &&
+        player.y < box.down
+    ){
+        player.x = box.right
+    }
+}
+
+function collisionInside(o,options={}){
+    const p = prevFramePlayer
+    
+    const elasticity = options.elasticity ?? 0
+    const offset = {
+         top: options.offsetTop ?? options.offset ?? 0,
+         down: options.offsetDown ?? options.offset ?? 0,
+         left: options.offsetLeft ?? options.offset ?? 0,
+         right: options.offsetRight ?? options.offset ?? 0,
+    }
+    const box = {
+         top: !options.reverseHeight ? o.y - offset.top : o.y - o.h - offset.top,
+         down: !options.reverseHeight ? o.y + o.h + offset.down : o.y + offset.down,
+         left: o.x - offset.left,
+         right: o.x + o.w + offset.right
+    }
+
+    if(
+        !options.disableTop &&
+        p.y + p.h <= box.top &&
+        player.y + player.h > box.top &&
+        player.x + player.w > box.left &&
+        box.right > player.x
+    ){
+        if(player.mode === "bigJeff" && player.vy >= 15){
+            audios.jeffImpact.play()
+            createParticle("dirtSplash",5,player.x,player.y+player.h)
+            shakeCamera(10,4)
+        }
+        
+        player.y = box.top - player.h
+        player.vy = Math.abs(player.vy * -elasticity) > elasticity ? player.vy * -elasticity : 0
+        player.onGround = true
+        if(options.type==="topPlatform")player.onTopPlatform = true
+        if(options.type==="topPlatformStack"){
+            player.onTopPlatform = true
+            player.onStackablePlatform = true
+        }
+    }
+
+    else if(
+        !options.disableDown &&
+        p.y >= box.down &&
+        player.y < box.down &&
+        player.x + player.w > box.left &&
+        box.right > player.x
+    ){
+        player.y = box.down
+        player.vy = Math.abs(player.vy * -elasticity) > elasticity ? player.vy * -elasticity : 0
+    }
+
+    else if(
+        !options.disableLeft &&
+        p.x + p.w <= box.left &&
+        player.x + player.w > box.left &&
+        player.y + player.h > box.top &&
+        player.y < box.down
+    ){
+        player.x = box.left - player.w
+    }
+
+    else if(
+        !options.disableRight &&
+        p.x >= box.right &&
+        player.x < box.right &&
+        player.y + player.h > box.top &&
+        player.y < box.down
+    ){
+        player.x = box.right
+    }
+}
+
+function collisionElement(o,e,options={}){
+    const p = e.prev ?? {
+            x: e.x - e.vx,
+            y: e.y - e.vy
+    }
+    
+    const isOnFloor = rect(e,o)
+    
+    const elasticity = options.elasticity ?? 0
+    const offset = {
+         top: options.offsetTop ?? options.offset ?? 0,
+         down: options.offsetDown ?? options.offset ?? 0,
+         left: options.offsetLeft ?? options.offset ?? 0,
+         right: options.offsetRight ?? options.offset ?? 0,
+    }
+    const box = {
+         top: !options.reverseHeight ? o.y - offset.top : o.y - o.h - offset.top,
+         down: !options.reverseHeight ? o.y + o.h + offset.down : o.y + offset.down,
+         left: o.x - offset.left,
+         right: o.x + o.w + offset.right
+    }
+
+    if(
+        !options.disableTop &&
+        p.y + e.h <= box.top &&
+        e.y + e.h > box.top &&
+        e.x + e.w > box.left &&
+        box.right > e.x
+    ){
+        e.y = box.top - e.h
+        e.vy = Math.abs(e.vy * -elasticity) > elasticity ? e.vy * -elasticity : 0
+        e.onGround = true
+        if(options.type==="topPlatform")e.onTopPlatform = true
+    }
+
+    else if(
+        !options.disableDown &&
+        p.y >= box.down &&
+        e.y < box.down &&
+        e.x + e.w > box.left &&
+        box.right > e.x
+    ){
+        e.y = box.down
+        e.vy = Math.abs(e.vy * -elasticity) > elasticity ? e.vy * -elasticity : 0
+    }
+
+    else if(
+        !options.disableLeft &&
+        p.x + e.w <= box.left &&
+        e.x + e.w > box.left &&
+        e.y + e.h > box.top &&
+        e.y < box.down
+    ){
+        e.x = box.left - e.w
+        if(options.stroll)e.vx*=-1
+    }
+
+    else if(
+        !options.disableRight &&
+        p.x >= box.right &&
+        e.x < box.right &&
+        e.y + e.h > box.top &&
+        e.y < box.down
+    ){
+        e.x = box.right
+        if(options.stroll)e.vx*=-1
+    }
+    
+    if(e.onGround&&options.stroll&&isOnFloor){
+       const frontX = e.vx>0 ? e.x+e.w+1 : e.x-1
+       const footY = e.y+e.h+2
+       const hasFloor = frontX>o.x && frontX<o.x+o.w && footY>=o.y && footY<=o.y+5
+       
+       if(!hasFloor){
+           e.vx*=-1
+           e.x += e.vx
+       }
+    }
+}
+
+function isOnHouse(h,p) {
+    const size = 64*eneScale
+    
+    return p.x < h.x + size &&
+       p.x + p.w > h.x &&
+       p.y < h.y &&
+       p.y + p.h > h.y - size * h.floors
+}
+
+function houseRamp(h,p) {
+    const rampStart = h.x + 30
+    const rampEnd = h.x + h.w - 30
+    if(p.x >= h.x && p.x <= h.x + h.w){
+            const rampHeight = 64*eneScale*(h.floors-1)
+            let yMod = clamp(0, 1, ((p.x - rampStart) / (rampEnd - rampStart)))
+            if(h.direction==="down") yMod = 1 - yMod
+            
+            const height = h.y - yMod*rampHeight
+            
+            if(p.y + p.h > height) {
+                            p.y = height - p.h
+                            p.vy = 0
+                            p.onGround = true
+            }
+    }
+}
+
+function enemiesHit(){
+    if(player.dead)return
+    let stomp = false
+    let died = false
+    let killed = false
+    let coinAdd = 0
+    
+    let sound = { pexeira:false,tongoloide:false,feixe:false,snerm:false }
+    
+    enemiesPexeira.forEach(enemy=>{
+         if(enemy.dead||died)return
+         
+          if (
+            player.vy > 0 &&
+            prevFramePlayer.y+player.h <= enemy.y &&
+            player.y + player.h >= enemy.y &&
+            player.x + player.w > enemy.x &&
+            player.x < enemy.x + enemy.w
+           ){
+           enemy.dead=true
+           enemy.animFrame = 0
+           enemy.state = "dead"
+           if(!stomp)stomp=true
+           if(!sound.pexeira)sound.pexeira=true
+           coinAdd+=10
+        }
+        else if(
+           player.y+player.h>enemy.y &&
+           player.y<enemy.y+enemy.h &&
+           prevFramePlayer.x+player.w>enemy.x &&
+           prevFramePlayer.x<enemy.x+enemy.w
+         ){
+         if(!player.immortal&&player.mode==="npc"){
+            died = true
+            return
+         }
+         
+         enemy.dead=true
+         enemy.animFrame = 0
+         enemy.state = "dead"
+         if(!killed)killed=true
+         if(!sound.pexeira)sound.pexeira=true
+         if(player.immortal)createParticle("checkpointStars", 5, enemy.x, enemy.y, sort(-1,1,true), sort(-1,1,true))
+         coinAdd+=10
+         }
+    })
+    
+    if(!died) enemiesTongoloide.forEach(enemy=>{
+         if(enemy.dead||died)return
+         if (
+            player.vy > 0 &&
+            prevFramePlayer.y+player.h <= enemy.y &&
+            player.y + player.h >= enemy.y &&
+            player.x + player.w > enemy.x &&
+            player.x < enemy.x + enemy.w
+           ){
+           enemy.dead=true
+           enemy.animFrame = 0
+           enemy.state = "dead"
+           if(!stomp)stomp=true
+           if(!sound.tongoloide)sound.tongoloide=true
+           coinAdd+=15
+        }
+        else if(
+           player.y+player.h>enemy.y &&
+           player.y<enemy.y+enemy.h &&
+           prevFramePlayer.x+player.w>enemy.x &&
+           prevFramePlayer.x<enemy.x+enemy.w
+         ){
+         if(!player.immortal&&player.mode==="npc"){
+            died = true
+            return
+         }
+         
+         enemy.dead=true
+         enemy.animFrame = 0
+         enemy.state = "dead"
+         if(!killed)killed=true
+         if(!sound.tongoloide)sound.tongoloide=true
+         if(player.immortal)createParticle("checkpointStars", 5, enemy.x, enemy.y, sort(-1,1,true), sort(-1,1,true))
+         coinAdd+=15
+         }
+    })
+    
+    if(!died) enemiesFeixe.forEach(enemy=>{
+         if(enemy.dead||died)return
+         if(
+           player.y+player.h>enemy.y &&
+           player.y<enemy.y+enemy.h &&
+           prevFramePlayer.x+player.w>enemy.x &&
+           prevFramePlayer.x<enemy.x+enemy.w
+         ){
+         if(!player.immortal&&player.mode==="npc"){
+            died = true
+            return
+         }
+         
+         enemy.dead=true
+         enemy.animFrame = 0
+         enemy.state = "dead"
+         enemy.vy=0
+         if(!killed)killed=true
+         if(!sound.feixe)sound.feixe=true
+         if(player.immortal)createParticle("checkpointStars", 5, enemy.x, enemy.y, sort(-1,1,true), sort(-1,1,true))
+         coinAdd+=20
+         }
+    })
+    
+    if(!died)enemiesSnerm.forEach(enemy=>{
+         if(enemy.dead||died)return
+         if(
+           player.y+player.h>enemy.y &&
+           player.y<enemy.y+enemy.h &&
+           prevFramePlayer.x+player.w>enemy.x &&
+           prevFramePlayer.x<enemy.x+enemy.w
+         ){
+         if(!player.immortal&&player.mode==="npc"){
+            died = true
+            return
+         }
+         
+         enemy.dead=true
+         enemy.animFrame = 0
+         enemy.state = "dead"
+         enemy.vy=0
+         if(!killed)killed=true
+         if(!sound.snerm)sound.snerm=true
+         if(player.immortal)createParticle("checkpointStars", 5, enemy.x, enemy.y, sort(-1,1,true), sort(-1,1,true))
+         coinAdd+=20
+         }
+    })
+    
+    if(!died)enemiesRosal.forEach(enemy=>{
+         if(enemy.dead||died)return
+         if (
+            player.vy > 0 &&
+            prevFramePlayer.y+player.h <= enemy.y &&
+            player.y + player.h >= enemy.y &&
+            player.x + player.w > enemy.x &&
+            player.x < enemy.x + enemy.w
+           ){
+           enemy.dead=true
+           enemy.animFrame = 0
+           enemy.state = "dead"
+           if(!stomp)stomp=true
+           if(!sound.pexeira)sound.pexeira=true
+           coinAdd+=20
+        }
+        else if(
+           player.y+player.h>enemy.y &&
+           player.y<enemy.y+enemy.h &&
+           prevFramePlayer.x+player.w>enemy.x &&
+           prevFramePlayer.x<enemy.x+enemy.w
+         ){
+         if(!player.immortal&&player.mode==="npc"){
+            died = true
+            return
+         }
+         
+         enemy.dead=true
+         enemy.animFrame = 0
+         enemy.state = "dead"
+         if(!killed)killed=true
+         if(!sound.pexeira)sound.pexeira=true
+         if(player.immortal)createParticle("checkpointStars", 5, enemy.x, enemy.y, sort(-1,1,true), sort(-1,1,true))
+         coinAdd+=20
+         }
+    })
+    
+    if(!died)enemiesMamute.forEach(enemy=>{
+         if(enemy.state==="dead"||died)return
+         if(
+           player.y+player.h>enemy.y &&
+           player.y<enemy.y+enemy.h &&
+           prevFramePlayer.x+player.w>enemy.x &&
+           prevFramePlayer.x<enemy.x+enemy.w
+         ){
+           if(player.holding!=="pastel"){
+               died=true
+               enemy.state="idle"
+               return
+           } else {
+                enemy.state="dead"
+                player.holding=null
+                audios.mamuteYay.pause()
+                audios.mamuteYay.currentTime=0.3
+                audios.mamuteYay.play()
+                coinAdd+=10
+           }
+        }
+    })
+    
+    if(sound.pexeira){
+      audios.pexeira.pause()
+      audios.pexeira.currentTime=0
+      audios.pexeira.play()
+    }
+    if(sound.tongoloide){
+      audios.tongoloideHurt.pause()
+      audios.tongoloideHurt.currentTime=0
+      audios.tongoloideHurt.play()
+    }
+    if(sound.feixe){
+      audios.feixeHurt.pause()
+      audios.feixeHurt.currentTime=0
+      audios.feixeHurt.play()
+    }
+    if(sound.snerm){
+      audios.snermHurt.pause()
+      audios.snermHurt.currentTime=0
+      audios.snermHurt.play()
+    }
+    
+    if(!died)coins+=coinAdd*(levelData.coinMod??1)
+    if(stomp){
+      player.vy=-10
+      player.y-=10
+    }
+    else if(killed){
+      if(player.immortal){
+          if(!player.pastelBoost) {
+             audios.pastelDash.pause()
+             audios.pastelDash.currentTime = 0
+             audios.pastelDash.play()
+          }
+          player.pastelBoost = 60
+      } else if(player.mode==="bigJeff")audios.jeffBounce.play()
+    }
+  else if(died)die({ cause:"enemy", coinLoss: 20 })
+}
+
+function solidCollision(a,b){
+if(!rect(a,b))return
+
+const dx1 = a.x + a.w - b.x
+const dx2 = b.x + b.w - a.x
+const dy1 = a.y + a.h - b.y
+const dy2 = b.y + b.h - a.y
+
+const minX = Math.min(dx1,dx2)
+const minY = Math.min(dy1,dy2)
+
+if(minX < minY){
+if(dx1 < dx2) a.x = b.x - a.w
+else a.x = b.x + b.w
+}
+else{
+if(dy1 < dy2){
+a.y = b.y - a.h
+a.vy = 0
+a.onGround = true
+}
+else{
+a.y = b.y + b.h
+a.vy = 0
+}
+}
+}
+
+function solidCollisionForStroll(a,b){
+if(!rect(a,b))return
+
+const dx1 = a.x + a.w - b.x
+const dx2 = b.x + b.w - a.x
+const dy1 = a.y + a.h - b.y
+const dy2 = b.y + b.h - a.y
+
+const minX = Math.min(dx1,dx2)
+const minY = Math.min(dy1,dy2)
+
+if(minX < minY){
+a.vx *= -1
+if(dx1 < dx2) a.x = b.x - a.w
+else a.x = b.x + b.w
+}
+else{
+if(dy1 < dy2){
+a.y = b.y - a.h
+a.vy = 0
+a.onGround = true
+}
+else{
+a.y = b.y + b.h
+a.vy = 0
+}
+}
+}
+
+let lastPlatformY = Infinity
+
+// update
+function update(){
+  prevFramePlayer = { ...player }
+  if(dialog.dialog)player.move=false
+  
+  if (state === "startScreen" || state === "map") return
+  gameTime++
+  idleTime++
+  if(player.abilityCooldown)player.abilityCooldown--
+  preservedVx = Math.abs(player.vx)
+  if(!player.onGround)airTime++
+  else airTime = 0
+  
+  if ((player.x > levelData.exitPlat.x + 50) && !player.onExit) exit()
+ 
+  if (player.dead && player.y < 670) player.state = "dead"
+  else if (player.onExit) player.state = "comemorating"
+  else if(player.state === "ability"){}
+  else if (player.vy && player.vy > 0) {
+        idleTime = 0
+        player.state = "falling"
+  }
+  else if (player.vy && player.vy < 0) {
+        idleTime = 0
+        player.state = "jumping"
+  }
+  else if (player.vx !== 0) {
+    idleTime = 0
+    player.state = "walking"
+} 
+else {
+    if (!player.dead) {
+    if (idleTime > 400) player.state = "idle_long"
+    else player.state = "idle"
+    }
+}
+
+const waterLevel=levelData?.water?.y??Infinity
+const depth=Math.max((player.y+player.h)-waterLevel,0)
+const depthProgress=Math.min(depth/(player.h*1.5),1)
+const waterDrag=Math.max(0.85,1-depth/player.h)
+if(depth){
+ audioFilter.frequency=20000-(depthProgress*19000)
+ audioFilter.volume=1-(depthProgress*0.5)
+ audioFilter.playbackRate=1-(depthProgress*0.15)
+ audioFilter.detune=depthProgress*-250
+ audioFilter.update()
+} else {
+ audioFilter.frequency=20000
+ audioFilter.volume=1
+ audioFilter.playbackRate=1
+ audioFilter.detune=0
+ audioFilter.update()
+}
+
+checkCodes()
+  
+player.vx=0
+if(keys.left && player.move)player.vx = (keys["run"] ? -2 : 0) + (player.mode === "bigJeff" ? -10 : player.immortal ? -6 : -4)
+if(keys.right && player.move) player.vx = (keys["run"] ? 2 : 0) + (player.mode === "bigJeff" ? 10 : player.immortal ? 6 : 4)
+if(depth)player.vx+=-(levelData?.water?.flow??0)
+
+if(keys.jump&&(player.onGround || player.pastelBoost||depth>6) && player.move){
+if(player.mode === "deives") audios.jump.play()
+player.vy=-13
+player.onGround=false
+player.onTopPlatform=false
+player.onStackablePlatform=false
+}
+
+if(!keys.hold&&player.holding){
+    items.push({ x:player.x+player.w/2, y:player.y+player.h-42, baseY:player.y+player.h-42, type: player.holding, w:20,h:20 })
+    player.holding=null
+}
+
+if(dialog.dialog){
+    const scene = dialogData[dialog.dialog]?.scenes[dialog.scene]
+     if(keys.jump)scene.options[dialog.option]?.action()
+  else{
+     if(keys.up&&dialog.option){
+       if(!dialog.movingFrame){
+           dialog.movingFrame=5
+        if(scene.options[dialog.option-1])dialog.option--
+        } else dialog.movingFrame--
+     }
+     else if(keys.down){
+        if(!dialog.movingFrame){
+           dialog.movingFrame=5
+        if(scene.options[dialog.option+1])dialog.option++
+        } else dialog.movingFrame--
+     }
+  }
+}
+
+player.vy+=gravity
+
+player.vx*=waterDrag
+player.vy*=waterDrag
+
+player.pastelBoost=player.pastelBoost>5?player.pastelBoost-5:0
+player.x+=player.pastelBoost?(player.vx + player.pastelBoost)*(flipPlayer ? -1 : 1):player.vx
+if (player.x < 0) player.x = 0
+if (levelData.lockCamera&&player.x+player.w > 390) player.x = 390 - player.w
+player.y+=player.vy
+player.onGround=false
+player.onTopPlatform=false
+player.onStackablePlatform=false
+
+flipPlayer = player.vx < 0 ? true : player.vx > 0 ? false : flipPlayer
+
+if(flags.battleArena){
+    const allEmpty = enemiesPexeira.length===0 &&
+  enemiesTongoloide.length===0 &&
+  enemiesRosal.length===0
+  const mayStart = allEmpty&&!flags.baRoundDelay
+    const maxRound = 10
+    
+    if(mayStart)flags.baRound++
+
+    if(flags.baRound>maxRound){
+       despawnAllEnemies()
+       dialog.dialog="gym"
+       dialog.scene=4
+       dialog.option=0
+       player.move=false
+       coins+=150
+       flags.battleArena=false
+       flags.baRoundDelay=0
+       flags.baRound=0
+       keys.jump=false
+    }
+    else if(mayStart){
+       const maxEnemies = Math.round((flags.baRound)*0.75+Math.random())
+       const possibleEnemies = [
+          enemiesPexeira,
+          enemiesRosal
+       ]
+       
+       for(let r = 0; r < maxEnemies; r++){
+           const indice = sort(0,possibleEnemies.length-1)
+           const enemyType = possibleEnemies[indice]
+           if(enemyType===enemiesRosal)possibleEnemies.splice(indice,1)
+           spawnEnemy(enemyType,{ x: Math.round(365-70*Math.random()), y: 580 },{ vx: Math.round(-flags.baRound/1.6-2*Math.random()), cool: 90/(1+flags.baRound*0.1) })
+       }
+       flags.baRoundDelay=50
+    }
+    else if(flags.baRoundDelay>0&&allEmpty){
+         flags.baRoundDelay--
+         if(flags.baRoundDelay===10&&flags.baRound+1<maxRound){
+             const particleCount = sort(8,15)
+             for(let i=0; i<particleCount; i++){
+                 createParticle("smoke", 4, Math.round(365-70*Math.random()), Math.round(650-70*Math.random()), sort(-2,2,true), sort(-2,2,true))
+             }
+         }
+    }
+}
+
+if(rect(player,checkpoint) && !player.dead && !checkpoint.active) {
+    checkpoints[level] = true
+    checkpoint.active = true
+    audios.checkpoint.play()
+    createParticle("checkpointStars", 5, player.x, player.y, sort(-1,1,true), sort(-1,1,true))
+    coins+=Math.round((20+Math.floor(1.25*(level-1)))/2)
+}
+
+platforms.forEach(p=>{
+  if(!isNearScreen(p, 500))return
+  
+  collision(p)
+})
+
+walkways.forEach(p => {
+  if(!isNearScreen(p, 500))return
+  
+  collision(p)
+})
+
+
+topPlatforms.forEach(p => {
+    if(!isNearScreen(p, 500))return
+    
+    let type = "topPlatform"
+    
+    if(p.stackable && player.x + player.w > p.x && p.x + p.w > player.x && prevFramePlayer.y + prevFramePlayer.h <= p.y && player.y + player.h > p.y) {
+    if(player.mode === "bigJeff" && player.vy >= 15) {
+       audios.jeffImpact.play()
+       createParticle("dirtSplash", 5, player.x, player.y+player.h)
+    }
+    player.y = p.y - player.h
+    player.vy = 0
+    player.onTopPlatform = true
+    player.onStackablePlatform = true
+    player.onGround = true
+    type = "topPlatformStack"
+}
+
+if(!prevFramePlayer.onTopPlatform) return
+    
+    collision(p,{ type: type, disableLeft: p.stackable, disableRight: p.stackable })
+})
+
+const targetPlatforms = topPlatforms.filter(p => !p.stackable && player.x + player.w > p.x && p.x + p.w > player.x)
+
+lastPlatformY = Infinity
+
+if(targetPlatforms.length > 1) targetPlatforms.forEach(p => {
+    if(p.y < lastPlatformY) {
+            lastPlatformY = p.y
+    }
+})
+else if(targetPlatforms.length === 1) lastPlatformY = targetPlatforms[0].y
+
+if(prevFramePlayer.y + prevFramePlayer.h <= lastPlatformY && player.y + player.h > lastPlatformY) {
+    if(player.mode === "bigJeff" && player.vy >= 15) {
+       audios.jeffImpact.play()
+       createParticle("dirtSplash", 5, player.x, player.y+player.h)
+    }
+    player.y = lastPlatformY - player.h
+    player.vy = 0
+    player.onTopPlatform = true
+    player.onGround = true
+}
+
+houses.forEach(h => {
+  if(!isNearScreen(h, h.h+500))return
+  
+  const playerFloor = Math.floor((h.y-(player.y+player.h))/(64*eneScale))
+  
+  if(!isOnHouse(h,prevFramePlayer)){
+       const allowLeft = h.direction === "up" ? playerFloor === 0 : playerFloor === h.floors-1
+       const allowRight = h.direction === "up" ? playerFloor === h.floors-1 : playerFloor === 0
+       
+       const options = {
+            reverseHeight: true,
+            disableLeft: allowLeft,
+            disableRight: allowRight,
+            offset: 2*eneScale,
+            offsetTop: 0
+       }
+       
+       collision(h,options)
+  }
+  else houseRamp(h, player)
+
+/*
+const floorMargin = 12 * eneScale
+
+let currentFloor = Math.floor(
+  (h.y - (player.y + player.h) + floorMargin) / (64 * eneScale)
+)
+
+let allowRight = false
+let allowLeft = false
+
+if (currentFloor >= 0 && currentFloor < h.floors) {
+  if (h.direction === "up") {
+    if (currentFloor === 0) allowRight = true
+    if (currentFloor === h.floors - 1) allowLeft = true
+  } else {
+    if (currentFloor === h.floors - 1) allowRight = true
+    if (currentFloor === 0) allowLeft = true
+  }
+}
+
+  if (!isOnHouse(h, prevFramePlayer)) {
+
+    if (
+      prevFramePlayer.x + prevFramePlayer.w <= h.x &&
+      player.x + player.w > h.x &&
+      player.y + player.h > h.y - h.floors * 64 * eneScale &&
+      player.y < h.y &&
+      !allowRight
+    ) {
+      player.x = h.x - player.w
+    }
+
+    else if (
+      prevFramePlayer.x >= h.x + h.w &&
+      player.x < h.x + h.w &&
+      player.y + player.h > h.y - h.floors * 64 * eneScale &&
+      player.y < h.y &&
+      !allowLeft
+    ) {
+      player.x = h.x + h.w
+    }
+
+    if (
+      prevFramePlayer.y + prevFramePlayer.h <= h.y - h.floors * 64 * eneScale &&
+      player.y + player.h > h.y - h.floors * 64 * eneScale &&
+      player.x + player.w > h.x &&
+      player.x < h.x + h.w
+    ) {
+      player.y = h.y - h.floors * 64 * eneScale - player.h
+      player.vy = 0
+      player.onGround = true
+    }
+
+    else if (
+      player.vy < 0 &&
+      prevFramePlayer.y >= h.y &&
+      player.y < h.y &&
+      player.x + player.w > h.x &&
+      player.x < h.x + h.w
+    ) {
+      player.y = h.y
+      player.vy = 0
+    }
+  } else {
+        houseRamp(h, player)
+        const collisionMargin = 6 * eneScale
+        
+        if (
+          prevFramePlayer.x >= h.x + collisionMargin &&
+          player.x < h.x + collisionMargin &&
+          player.y + player.h > h.y - h.floors * 64 * eneScale + collisionMargin &&
+          player.y < h.y - collisionMargin &&
+          !allowRight
+        ) {
+          player.x = h.x + collisionMargin
+        }
+
+        else if (
+          prevFramePlayer.x + prevFramePlayer.w <= h.x + h.w - collisionMargin &&
+          player.x + player.w > h.x + h.w - collisionMargin &&
+          player.y + player.h > h.y - h.floors * 64 * eneScale + collisionMargin &&
+          player.y < h.y - collisionMargin &&
+          !allowLeft
+        ) {
+          player.x = h.x + h.w - player.w - collisionMargin
+        }
+
+        if (
+          prevFramePlayer.y >= h.y - h.floors * 64 * eneScale &&
+          player.y < h.y - h.floors * 64 * eneScale &&
+          player.x + player.w > h.x &&
+          player.x < h.x + h.w
+        ) {
+          player.y = h.y - h.floors * 64 * eneScale
+          player.vy = 0
+        }
+
+        else if (
+          prevFramePlayer.y + prevFramePlayer.h <= h.y &&
+          player.y + player.h > h.y &&
+          player.x + player.w > h.x &&
+          player.x < h.x + h.w
+        ) {
+          player.y = h.y - player.h
+          player.vy = 0
+          player.onGround = true
+        }
+      }
+      
+      */
+
+})
+
+enemiesHit()
+
+enemiesPexeira.forEach((enemy,i)=>{
+  if(!isOnScreen(enemy, 1000)){
+    if(enemy.dead)enemiesPexeira.splice(i,1)
+    if(!enemy.alwaysLoad)return
+  }
+  enemy.prev={ x: enemy.x, y: enemy.y }
+
+  if (enemy.dead) {
+    enemy.vy += gravity
+    enemy.y += enemy.vy
+    return
+  }
+  
+  const eDepth=Math.max((enemy.y+enemy.h)-waterLevel,0)
+  const eWaterDrag=Math.max(0.85,1-eDepth/enemy.h)
+  
+  enemy.vy += gravity
+  
+  enemy.vy*=eWaterDrag
+  enemy.vx*=eWaterDrag
+  
+  enemyVel(enemy,"x")
+  enemy.y += enemy.vy
+  enemy.onGround = false
+
+  platforms.forEach(p=>{
+    if(!isNearElement(enemy,p,1000))return
+    collisionElement(p,enemy,{ stroll: true })
+  })
+  
+
+walkways.forEach(w=>{
+  if(!isNearElement(enemy,w,1000))return
+  collisionElement(w,enemy,{ stroll: true })
+})
+
+  
+  topPlatforms.forEach(p=>{
+    if(!isOnScreen(enemy,p,1000))return
+    collisionElement(p,enemy,{ stroll: true, disableLeft: true, disableRight: true })
+  })
+  
+  houses.forEach(h=>{
+    if(!isNearElement(enemy,h,1000))return
+    collisionElement(h,enemy,{ stroll: true, reverseHeight: true })
+  })
+})
+
+enemiesTongoloide.forEach((enemy,i)=>{
+  if(!isOnScreen(enemy, 1000)){
+    if(enemy.dead)enemiesTongoloide.splice(i,1)
+    if(!enemy.alwaysLoad)return
+  }
+  enemy.prev={ x: enemy.x, y: enemy.y }
+  
+  if (enemy.dead) {
+    enemy.vy += gravity
+    enemy.y += enemy.vy
+    return
+  }
+
+  enemy.vy += gravity
+  enemyVel(enemy,"x")
+  enemy.y += enemy.vy
+  enemy.onGround = false
+
+  platforms.forEach(p=>{
+    if(!isNearElement(enemy,p,1000))return
+    collisionElement(p,enemy)
+  })
+  
+
+walkways.forEach(w=>{
+  if(!isNearElement(enemy,w,1000))return
+  collisionElement(w,enemy)
+})
+
+  
+  topPlatforms.forEach(p=>{
+    if(!isNearElement(enemy,p,1000))return
+    collisionElement(p,enemy,{ disableLeft: true, disableRight: true })
+  })
+  
+  houses.forEach(h=>{
+    if(!isNearElement(enemy,h,1000))return
+    collisionElement(h,enemy,{ reverseHeight: true })
+  })
+})
+
+enemiesFeixe.forEach((enemy,i)=>{
+  if(!isOnScreen(enemy, 1000)){
+    if(enemy.dead)enemiesFeixe.splice(i,1)
+    if(!enemy.alwaysLoad)return
+  }
+  enemy.prev={ x: enemy.x, y: enemy.y }
+
+  if (enemy.dead) {
+    enemy.vy += gravity
+    enemy.y += enemy.vy
+    return
+  }
+  
+  enemyVel(enemy,"x")
+  enemyVel(enemy,"y")
+
+  platforms.forEach(p=>{
+    if(!isNearElement(enemy,p,1000))return
+    collisionElement(p,enemy,{ stroll: true })
+  })
+  
+
+walkways.forEach(w=>{
+  if(!isNearElement(enemy,w,1000))return
+  collisionElement(w,enemy,{ stroll: true })
+})
+
+  
+  topPlatforms.forEach(p=>{
+    if(!isOnScreen(enemy,p,1000))return
+    collisionElement(p,enemy,{ stroll: true, disableLeft: true, disableRight: true })
+  })
+  
+  houses.forEach(h=>{
+    if(!isNearElement(enemy,h,1000))return
+    collisionElement(h,enemy,{ stroll: true, reverseHeight: true })
+  })
+})
+
+enemiesSnerm.forEach((enemy,i)=>{
+  if(!isOnScreen(enemy, 1000)){
+    if(enemy.dead)enemiesSnerm.splice(i,1)
+    if(!enemy.alwaysLoad)return
+  }
+  enemy.prev={ x: enemy.x, y: enemy.y }
+
+  if (enemy.dead) {
+    enemy.vy += gravity
+    enemy.y += enemy.vy
+    return
+  }
+  const s=Math.sin(gameTime*enemy.vy/10)
+  const vel=Math.sign(s)*Math.pow(Math.abs(s),0.75)*enemy.ampl
+  if(enemy.lastVel>0&&vel>=0&&Math.abs(player.x-enemy.x)<=500){
+    audios.snermAttack.pause()
+    audios.snermAttack.currentTime=0
+    audios.snermAttack.play()
+  }
+  enemy.lastVel=vel
+  enemy.y=enemy.basey+vel
+})
+
+enemiesRosal.forEach((enemy,i) => {
+  if(!isOnScreen(enemy, 2000)){
+    if(enemy.dead)enemiesRosal.splice(i,1)
+    if(!enemy.alwaysLoad)return
+  }
+  if (enemy.dead) {
+    enemy.state = "dead"
+    enemy.vy += gravity
+    enemy.y += enemy.vy
+    return
+  }
+  
+  enemy.cool--
+  if (enemy.cool <= 0) {
+    bullets.push({ x: enemy.x+(enemy.flipped?10+enemy.w:-10), y: enemy.y + 5, w: 8, h: 4, vx: enemy.flipped?6:-6, vy: 0, time: 0, maxTime: enemy.bulletTime, alwaysLoad: enemy.alwaysLoad })
+    enemy.cool = enemy.baseCool
+    
+    const dx = player.x - enemy.x
+    const dy = player.y - enemy.y
+    const maxDist = 1000000
+
+    if (dx*dx + dy*dy <= maxDist) {
+        audios.shot.pause()
+        audios.shot.currentTime = 0
+        audios.shot.play()
+    }
+    
+    enemy.state = "walking"
+    enemy.animFrame = 0
+  }
+
+  if (enemy.state === "walking") {
+    enemy.animFrame += 0.15
+
+    if (enemy.animFrame >= 4) {
+      enemy.state = "idle"
+      enemy.animFrame = 0
+    }
+  }
+
+})
+
+for (let i = bullets.length - 1; i >= 0; i--) {
+  const b = bullets[i]
+  if(!b.alwaysLoad && !isNearScreen(b, 6000))continue
+  
+  b.time++
+  if (b.time >= b.maxTime) {
+    bullets.splice(i, 1)
+    continue
+  }
+  b.x += b.vx
+  b.y += b.vy
+  if (rect(player, b)) {
+    if(player.mode === "bigJeff"){
+      b.vy = 10
+      b.vx *= -0.5
+      audios.jeffBounce.play()
+    }
+    else {
+       bullets.splice(i, 1)
+       die({ cause:"bullet", coinLoss:10 })
+    }
+  }
+}
+
+for (let i = particles.length - 1; i >= 0; i--) {
+  const p = particles[i]
+  
+  if (p.time >= p.duration || !isNearScreen(p, 6000)) {
+    particles.splice(i, 1)
+    continue
+  }
+  p.x += p.vx
+  p.y += p.vy
+}
+
+for (let i = powerups.length - 1; i >= 0; i--) {
+  const p = powerups[i]
+  if(!isNearScreen(p, 1000))continue
+
+  p.y = p.baseY+Math.sin(gameTime*0.25)*5
+
+  if (player.mode !== p.newMode && rect(player, p)) {
+    audios.pastelEat.currentTime = 0.2
+    audios.pastelEat.play()
+    player.powerUpTime=99999999999999
+    p.onEat()
+    
+    powerups.splice(i, 1)
+  }
+}
+
+for (let i = items.length - 1; i >= 0; i--) {
+  const item = items[i]
+  if(!isNearScreen(item, 1000))continue
+
+  item.y = item.baseY+Math.sin(gameTime*0.25)*5
+  if(rect(player,item)&&!player.holding&&keys.hold){
+     items.splice(i, 1)
+     player.holding=item.type
+  }
+}
+
+if(!tomatoes[level] && isNearScreen(tomato, 1000)){
+    tomato.y = tomato.baseY+Math.sin(gameTime*0.25)*5
+    if(rect(player,tomato)){
+            audios.pastelEat.currentTime = 0.2
+            audios.pastelEat.play()
+            coins+=Math.round((20+Math.floor(1.25*(level-1)))*2.4)
+            
+            tomatoes[level] = true
+            tomato = {}
+    }
+}
+
+for (let i = pasteis.length - 1; i >= 0; i--) {
+  const p = pasteis[i]
+  if(!isNearScreen(p, 1000))continue
+
+  p.y = p.baseY+Math.sin(gameTime*0.25)*5
+
+  if (player.mode === "npc" && rect(player, p)) {
+    audios.pastelEat.currentTime = 0.2
+    audios.pastelEat.play()
+
+    player.immortal = true
+    player.immortalTime = 400
+
+    createParticle("checkpointStars", 5, p.x + p.w/2, p.y + p.h/2, sort(-1,1,true), sort(-1,1,true))
+    pasteis.splice(i, 1)
+  }
+}
+
+if(player.immortal){
+player.immortalTime--
+if(player.immortalTime<=0)player.immortal=false
+}
+
+if(player.mode!=="npc"){
+player.powerUpTime--
+if(player.powerUpTime<=0)toggleNpc()
+}
+
+if(player.y>670) die({ cause:"fell", coinLoss:10, ignoreImmortal:true })
+
+if(shakeTime > 0) shakeTime--
+else shakeStrength = 0
+
+cameraX=player.x-c.width/2 + (Math.random() - 0.5)*shakeStrength
+if(levelData.lockCamera || cameraX<0)cameraX=0
+
+cameraY=player.y<670?player.y-c.height/2  + (Math.random() - 0.5)*shakeStrength:cameraY
+if(levelData.lockY)cameraY=levelData.lockY-player.h-c.height/2
+
+if (fadeDirection !== 0) {
+  fadeAlpha += fadeSpeed * fadeDirection
+
+  if (fadeAlpha >= 1) {
+    fadeAlpha = 1
+    fadeDirection = 0
+    if (fadeCallback) fadeCallback()
+  }
+
+  if (fadeAlpha <= 0) {
+  fadeAlpha = 0
+  fadeDirection = 0
+  }
+}
+
+}
+
+// assets
+  // imgs
+  
+const startImg=new Image()
+startImg.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/startPlat.png"
+
+const exitImg=new Image()
+exitImg.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/exitPlat.png"
+
+const platformImgs = {
+inv: new Image(),
+stone1: new Image(),
+dirt1: new Image(),
+dirt2: new Image(),
+dirt3: new Image(),
+wood1: new Image(),
+checkered: new Image(),
+water: new Image(),
+mudWater: new Image(),
+bridgeStn: new Image(),
+grass1: new Image(),
+}
+
+platformImgs.stone1.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/stone1.png"
+platformImgs.dirt1.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/dirt1.png"
+platformImgs.dirt2.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/dirt2.png"
+platformImgs.dirt3.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/dirt3.png"
+platformImgs.wood1.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/wood1.png"
+platformImgs.checkered.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/checkered.png"
+platformImgs.water.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/water/water.png"
+platformImgs.mudWater.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/water/mud.png"
+platformImgs.bridgeStn.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/bridgeStn.png"
+platformImgs.grass1.src="https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/platforms/grass1.png"
+
+const houseImgs = [
+     {
+           theme:"favela",
+           images:[
+              new Image(),
+              new Image(),
+              new Image(),
+              new Image(),
+              new Image()
+           ]
+     },
+]
+
+const houseImgsFavela = houseImgs.find(e => e.theme === "favela").images
+
+houseImgsFavela[0].src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/houses/favelas/house1.png"
+houseImgsFavela[1].src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/houses/favelas/house2.png"
+houseImgsFavela[2].src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/houses/favelas/house3.png"
+houseImgsFavela[3].src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/houses/favelas/house4.png"
+houseImgsFavela[4].src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/houses/favelas/house5.png"
+
+const checkpointImg = new Image()
+checkpointImg.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/checkpoint.png"
+
+const enemyImgs = {
+    pexeira: new Image(),
+    rosal: new Image(),
+    tongoloide: new Image(),
+    mamute: new Image(),
+    feixe: new Image(),
+    snerm: new Image(),
+}
+
+enemyImgs.pexeira.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/pexeira.png"
+enemyImgs.rosal.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/rosal.png"
+enemyImgs.tongoloide.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/tongoloide.png"
+enemyImgs.mamute.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/mamute.png"
+enemyImgs.feixe.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/feixe.png"
+enemyImgs.snerm.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/enemy/snerm.png"
+
+const playersImgs = {
+    selector: new Image(),
+    npc: new Image(),
+    npcPastel: new Image(),
+    bigJeff: new Image(),
+}
+
+playersImgs.selector.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/players/selector.png"
+playersImgs.npc.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/players/npc.png"
+playersImgs.npcPastel.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/players/npcPastel.png"
+playersImgs.bigJeff.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/players/bigJeff.png"
+
+const propsSrc = {
+  none: "",
+  signGo: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/extra/signGo.png",
+  signWarn: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/extra/signWarn.png",
+  signRun: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/extra/signRun.png",
+  signHold: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/extra/signHold.png",
+  signAbility: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/extra/signAbility.png",
+  pole1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/furniture/pole1.png",
+  bench1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/furniture/bench1.png",
+  bush: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bush.png",
+  bushFlower: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bushFlower.png",
+  bush2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bush2.png",
+  bushFlower2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bushFlower2.png",
+  bushButterfly: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/bushButterfly.png",
+  palm1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/palm1.png",
+  palm2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/palm2.png",
+  favelaHouse1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/favelaHouse1.png",
+  favelaHouse2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/favelaHouse2.png",
+  favelaHouse3: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/favelaHouse3.png",
+  acacia1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/acacia1.png",
+  acacia2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/acacia2.png",
+  mimosa1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/mimosa1.png",
+  riverTree1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/riverTree1.png",
+  riverTree2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/trees/riverTree2.png",
+  suburbHouse1: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/suburbHouse1.png",
+  suburbHouse2: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/suburbHouse2.png",
+  suburbHouse3: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/suburbHouse3.png",
+  fence: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/furniture/fence.png",
+  halter: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/furniture/halter.png",
+  dumbbellRack: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/furniture/dumbbellRack.png",
+  gh: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/characters/gh.png",
+  serg: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/characters/serg.png",
+  sergTruck: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/sergTruck.png",
+  sergWall: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/structures/sergWall.png",
+  condiments: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/extra/condiments.png",
+  fridge: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/furniture/fridge.png",
+  deepFryer: "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/props/furniture/deepFryer.png",
+}
+
+const propsImgs = {}
+
+for (const key in propsSrc) {
+  const img = new Image()
+  img.src = propsSrc[key]
+  propsImgs[key] = img
+}
+
+const particleImgs = {
+    checkpointStars: new Image(),
+    dirtSplash: new Image(),
+    woodBreak: new Image(),
+    smoke: new Image(),
+}
+
+particleImgs.checkpointStars.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/particles/checkpointStars.png"
+particleImgs.dirtSplash.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/particles/dirtSplash.png"
+particleImgs.woodBreak.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/particles/woodBreak.png"
+particleImgs.smoke.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/particles/smoke.png"
+
+const itemsImgs = {
+    none: new Image(),
+    pastel: new Image(),
+}
+
+itemsImgs.none.src = ""
+itemsImgs.pastel.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/lives.png"
+
+const powerupsImages = {
+    tomato: new Image(),
+    pastel: new Image(),
+    burguer: new Image(),
+}
+
+powerupsImages.tomato.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/powerups/tomato.png"
+powerupsImages.pastel.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/powerups/goldenPastel.png"
+powerupsImages.burguer.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/powerups/burguer.png"
+
+const uiImages = {
+    coin: new Image(),
+    pastel: new Image()
+}
+
+uiImages.coin.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/coins.png"
+uiImages.pastel.src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/ui/lives.png"
+
+const mapImgs = [
+    new Image(),
+]
+
+mapImgs[0].src = "https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/images/maps/map1.png"
+
+const images = [
+    startImg,
+    exitImg,
+    ...Object.values(platformImgs),
+    ...houseImgs.flatMap(h => h.images),
+    checkpointImg,
+    ...Object.values(enemyImgs),
+    ...Object.values(playersImgs),
+    ...Object.values(propsImgs),
+    ...Object.values(particleImgs),
+    ...Object.values(itemsImgs),
+    ...Object.values(powerupsImages),
+    ...Object.values(uiImages),
+    ...mapImgs
+]
+
+// audios
+/*
+const audioCtx = new AudioContext()
+
+let audios = {}
+let musics = {
+    groovyGngJourney:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/groovy_gang_journey.mp3'),
+    favela_ambience:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/favela_ambience.mp3'),
+    suburbs_shuffle:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/suburbs_shuffle.mp3'),
+    gym_grind:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/gym_grind.mp3'),
+    sergs_soundtrack:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/sergs_soundtrack.mp3'),
+    splash_swing:new Audio('https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/splash_swing.mp3')
+}
+
+Object.values(musics).forEach(audio => {
+  audio.loop = true
+  audio.load()
+})
+
+let audioUrls = {
+    defeat:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/defeat.m4a',
+    checkpoint:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/checkpoint.m4a',
+    victory:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/victory.m4a',
+    
+    jump:'https://testeaudioretro-ycq241iayx.edgeone.app/jump.m4a',
+    pastelEat:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/eat.m4a',
+    pastelDash:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/dash.m4a',
+    
+    pexeira:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/pexera.m4a',
+    tongoloideHurt:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/tongoloideHurt.m4a',
+    shot:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/shot.m4a',
+    mamuteYay:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/mamuteYay.m4a',
+    feixeHurt:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/feixeHurt.m4a',
+    snermAttack:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/snermAttack.m4a',
+    snermHurt:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/snermHurt.m4a',
+    
+    jeffImpact:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/bigJeff/impact.m4a',
+    jeffAbility:'https://bigjeffsounds-i1b1sup48r.edgeone.app/jeffSkill.MP4',
+    jeffBounce:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/bigJeff/attack.m4a',
+}
+
+
+// loader
+const assets = [
+    ...images.filter(img => img.src),
+    ...Object.values(musics).filter(audio => audio.src),
+    ...Object.entries(audioUrls)
+]
+
+let loadedCount = 0
+const totalAssets = assets.length
+
+const onAssetLoaded = () => {
+  loadedCount++
+  
+  if(loadedCount === totalAssets){
+    loaded = true
+    state = "startScreen"
+    startScreen()
+  } else loading()
+}
+
+for (const asset of assets) {
+    if (asset instanceof HTMLImageElement) {
+        if (asset.complete) {
+            onAssetLoaded()
+        } else {
+            asset.addEventListener("load", onAssetLoaded, { once: true })
+            asset.addEventListener("error", onAssetLoaded, { once: true })
+        }
+    } else if (asset instanceof HTMLAudioElement) {
+        if (asset.readyState >= 3) {
+            onAssetLoaded()
+        } else {
+            asset.addEventListener("canplaythrough", onAssetLoaded, { once: true })
+            asset.addEventListener("error", onAssetLoaded, { once: true })
+        }
+    } else {
+        const [name,url] = asset
+
+        fetch(url)
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+            .then(audioBuffer => {
+
+                let audio = {
+                    buffer:audioBuffer,
+                    source:null,
+                    gain:null,
+                    panner:null,
+
+                    startTime:0,
+                    pausedAt:0,
+
+                    volume:1,
+                    playbackRate:1,
+                    detune:0,
+                    pan:0,
+
+                    loop:false,
+                    paused:true,
+
+                    get currentTime(){
+                        if(this.paused){
+                            return this.pausedAt
+                        }
+
+                        let time = (audioCtx.currentTime - this.startTime) * this.playbackRate
+
+                        if(this.loop){
+                            return time % this.buffer.duration
+                        }
+
+                        return Math.min(time,this.buffer.duration)
+                    },
+
+                    set currentTime(value){
+                        value = Math.max(0,Math.min(value,this.buffer.duration))
+
+                        this.pausedAt = value
+
+                        if(!this.paused){
+                            this.play()
+                        }
+                    },
+
+                    get duration(){
+                        return this.buffer.duration
+                    },
+
+                    play(){
+                        if(muteSounds)return Promise.resolve()
+
+                        if(!this.paused)return Promise.resolve()
+
+                        if(audioCtx.state === "suspended"){
+                            audioCtx.resume()
+                        }
+
+                        const source = audioCtx.createBufferSource()
+                        const gain = audioCtx.createGain()
+                        const panner = audioCtx.createStereoPanner()
+
+                        source.buffer = this.buffer
+
+                        source.loop = this.loop
+                        source.playbackRate.value = this.playbackRate
+                        source.detune.value = this.detune
+
+                        gain.gain.value = this.volume
+
+                        panner.pan.value = Math.max(-1,Math.min(1,this.pan))
+
+                        source.connect(gain)
+                        gain.connect(panner)
+                        panner.connect(audioCtx.destination)
+
+                        this.source = source
+                        this.gain = gain
+                        this.panner = panner
+
+                        this.startTime = audioCtx.currentTime - (this.pausedAt / this.playbackRate)
+                        this.paused = false
+
+                        source.onended = () => {
+                            if(!this.loop){
+                                this.pausedAt = 0
+                                this.paused = true
+                                this.source = null
+                            }
+                        }
+
+                        source.start(0,this.pausedAt)
+
+                        return Promise.resolve()
+                    },
+
+                    pause(){
+                        if(this.paused)return
+
+                        this.pausedAt = this.currentTime
+
+                        if(this.source){
+                            this.source.onended = null
+                            this.source.stop()
+                            this.source = null
+                        }
+
+                        this.paused = true
+                    },
+
+                    reset(){
+                        if(this.source){
+                            this.source.onended = null
+                            this.source.stop()
+                            this.source = null
+                        }
+
+                        this.pausedAt = 0
+                        this.startTime = 0
+                        this.paused = true
+                    }
+                }
+
+                audios[name] = audio
+
+            })
+            .catch(error => {
+                console.error(`Error loading audio "${name}":`,error)
+            })
+            .finally(() => {
+                onAssetLoaded()
+            })
+    }
+}
+*/
+
+// audios
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+const masterGain = audioCtx.createGain()
+const globalFilter = audioCtx.createBiquadFilter()
+
+globalFilter.type = "lowpass"
+globalFilter.frequency.value = 20000
+globalFilter.Q.value = 1
+masterGain.gain.value = 1
+
+globalFilter.connect(masterGain)
+masterGain.connect(audioCtx.destination)
+
+const audioFilter = {
+    volume:1,
+    playbackRate:1,
+    detune:0,
+    pan:0,
+    frequency:20000,
+    Q:1,
+    filterType:"lowpass",
+    muted:false,
+
+    update(){
+        globalFilter.type = this.filterType
+        globalFilter.frequency.setTargetAtTime(this.frequency,audioCtx.currentTime,0.05)
+        globalFilter.Q.setTargetAtTime(this.Q,audioCtx.currentTime,0.05)
+        masterGain.gain.setTargetAtTime(this.muted ? 0 : this.volume,audioCtx.currentTime,0.05)
+
+        Object.values(audios).forEach(audio => {
+            if(audio.source){
+                audio.source.playbackRate.setTargetAtTime(audio.playbackRate * this.playbackRate,audioCtx.currentTime,0.05)
+                audio.source.detune.setTargetAtTime(audio.detune + this.detune,audioCtx.currentTime,0.05)
+            }
+            if(audio.panner)audio.panner.pan.setTargetAtTime(Math.max(-1,Math.min(1,audio.pan + this.pan)),audioCtx.currentTime,0.05)
+        })
+
+        Object.values(musics).forEach(audio => {
+            if(audio.source){
+                audio.source.playbackRate.setTargetAtTime(audio.playbackRate * this.playbackRate,audioCtx.currentTime,0.05)
+                audio.source.detune.setTargetAtTime(audio.detune + this.detune,audioCtx.currentTime,0.05)
+            }
+            if(audio.panner)audio.panner.pan.setTargetAtTime(Math.max(-1,Math.min(1,audio.pan + this.pan)),audioCtx.currentTime,0.05)
+        })
+    }
+}
+
+let audios = {}
+let musics = {}
+
+let audioUrls = {
+    defeat:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/defeat.m4a',
+    checkpoint:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/checkpoint.m4a',
+    victory:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/victory.m4a',
+    jump:'https://testeaudioretro-ycq241iayx.edgeone.app/jump.m4a',
+    pastelEat:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/eat.m4a',
+    pastelDash:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/npc/dash.m4a',
+    pexeira:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/pexera.m4a',
+    tongoloideHurt:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/tongoloideHurt.m4a',
+    shot:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/shot.m4a',
+    mamuteYay:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/mamuteYay.m4a',
+    feixeHurt:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/feixeHurt.m4a',
+    snermAttack:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/snermAttack.m4a',
+    snermHurt:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/enemies/snermHurt.m4a',
+    jeffImpact:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/bigJeff/impact.m4a',
+    jeffAbility:'https://bigjeffsounds-i1b1sup48r.edgeone.app/jeffSkill.MP4',
+    jeffBounce:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/audios/bigJeff/attack.m4a'
+}
+
+let musicUrls = {
+    groovyGngJourney:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/groovy_gang_journey.mp3',
+    favela_ambience:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/favela_ambience.mp3',
+    suburbs_shuffle:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/suburbs_shuffle.mp3',
+    gym_grind:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/gym_grind.mp3',
+    sergs_soundtrack:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/sergs_soundtrack.mp3',
+    splash_swing:'https://raw.githubusercontent.com/victaosigma/AltinhoHeros/refs/heads/main/assets/musics/splash_swing.mp3'
+}
+
+const assets = [
+    ...images.filter(img => img.src),
+    ...Object.entries(audioUrls),
+    ...Object.entries(musicUrls)
+]
+
+let loadedCount = 0
+const totalAssets = assets.length
+
+const onAssetLoaded = () => {
+    loadedCount++
+
+    if(loadedCount === totalAssets){
+        loaded = true
+        state = "startScreen"
+        startScreen()
+    } else loading()
+}
+
+for(const asset of assets){
+    if(asset instanceof HTMLImageElement){
+        if(asset.complete)onAssetLoaded()
+        else{
+            asset.addEventListener("load",onAssetLoaded,{ once:true })
+            asset.addEventListener("error",onAssetLoaded,{ once:true })
+        }
+    } else {
+        const [name,url] = asset
+
+        fetch(url)
+            .then(response => {
+                if(!response.ok)throw new Error(`HTTP ${response.status}`)
+                return response.arrayBuffer()
+            })
+            .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+            .then(audioBuffer => {
+                let audio = {
+                    buffer:audioBuffer,
+                    source:null,
+                    gain:null,
+                    panner:null,
+                    startTime:0,
+                    pausedAt:0,
+                    volume:1,
+                    playbackRate:1,
+                    detune:0,
+                    pan:0,
+                    loop:false,
+                    paused:true,
+
+                    get currentTime(){
+                        if(this.paused)return this.pausedAt
+
+                        let time = this.pausedAt + (audioCtx.currentTime - this.startTime) * (this.playbackRate * audioFilter.playbackRate)
+
+                        if(this.loop)return time % this.buffer.duration
+                        return Math.min(time,this.buffer.duration)
+                    },
+
+                    set currentTime(value){
+                        value = Math.max(0,Math.min(value,this.buffer.duration))
+
+                        if(this.paused)this.pausedAt = value
+                        else{
+                            this.reset()
+                            this.pausedAt = value
+                            this.play()
+                        }
+                    },
+
+                    get duration(){
+                        return this.buffer.duration
+                    },
+
+                    async play(){
+                        if(audioFilter.muted)return
+                        if(!this.paused)return
+
+                        if(audioCtx.state === "suspended")await audioCtx.resume()
+
+                        const source = audioCtx.createBufferSource()
+                        const gain = audioCtx.createGain()
+                        const panner = audioCtx.createStereoPanner()
+
+                        source.buffer = this.buffer
+                        source.loop = this.loop
+                        source.playbackRate.value = this.playbackRate * audioFilter.playbackRate
+                        source.detune.value = this.detune + audioFilter.detune
+                        gain.gain.value = this.volume * audioFilter.volume
+                        panner.pan.value = Math.max(-1,Math.min(1,this.pan + audioFilter.pan))
+
+                        source.connect(gain)
+                        gain.connect(panner)
+                        panner.connect(globalFilter)
+
+                        this.source = source
+                        this.gain = gain
+                        this.panner = panner
+                        this.startTime = audioCtx.currentTime
+                        this.paused = false
+
+                        source.onended = () => {
+                            if(!this.loop){
+                                this.pausedAt = 0
+                                this.paused = true
+                                this.source = null
+                            }
+                        }
+
+                        source.start(0,this.pausedAt)
+                    },
+
+                    pause(){
+                        if(this.paused)return
+
+                        this.pausedAt = this.currentTime
+
+                        if(this.source){
+                            this.source.onended = null
+                            this.source.stop()
+                            this.source = null
+                        }
+
+                        this.paused = true
+                    },
+
+                    reset(){
+                        if(this.source){
+                            this.source.onended = null
+                            this.source.stop()
+                            this.source = null
+                        }
+
+                        this.pausedAt = 0
+                        this.startTime = 0
+                        this.paused = true
+                    }
+                }
+
+                if(Object.hasOwn(audioUrls,name))audios[name] = audio
+
+                if(Object.hasOwn(musicUrls,name)){
+                    audio.loop = true
+                    musics[name] = audio
+                }
+            })
+            .catch(error => {
+                console.error(`Error loading audio "${name}":`,error)
+            })
+            .finally(() => {
+                onAssetLoaded()
+            })
+    }
+}
+
+// draw
+
+function drawTopPlatform(p){
+    const img = platformImgs[p.type] || platformImgs.stone1
+    if(!img || !img.complete) return
+
+    const tileW = 16 * objScale
+    const tileH = 512 * objScale
+
+    let visualStart = Math.floor(p.x - cameraX - tileW)
+    const startY = Math.floor(p.y - 40*objScale - cameraY)
+
+    const tiles = Math.ceil(p.w / tileW)
+
+    for(let i = 0; i < tiles + 2; i++){
+        let sx
+
+        if(i === 1){
+            sx = 0
+            visualStart = visualStart + 13
+        }
+        else if(i === tiles + 1){
+            sx = 33
+            visualStart = visualStart - 13
+        }
+        else{
+            sx = 17
+            visualStart = Math.floor(p.x - cameraX - tileW)
+        }
+        
+        const offsetI = i === 0 ? 1 : i === 1 ? 0 : i
+
+        ctx.drawImage(
+            img,
+            sx, 0, 16, 512,
+            visualStart + offsetI * tileW,
+            startY,
+            tileW,
+            tileH
+        )
+    }
+}
+
+function drawPlatform(p){
+    const img = platformImgs[p.type] || platformImgs.stone1
+    if(!img || !img.complete) return
+
+    const tileW = 16 * objScale
+    const tileH = 40 * objScale
+
+    const tiles = Math.round((p.visualW + 26*objScale) / tileW)
+
+    const startY = Math.floor(p.y - 38*objScale - cameraY)
+
+    for(let i=0;i<tiles;i++){
+        let sx
+
+        if(i===0) sx = 0
+        else if(i===tiles-1) sx = 33
+        else sx = 17
+
+        ctx.drawImage(
+            img,
+            sx,0,16,40,
+            Math.floor(p.x - 6*objScale - cameraX) + i*tileW,
+            startY,
+            tileW,
+            tileH
+        )
+    }
+}
+
+function drawPlatformBottom(p){
+    const img = platformImgs[p.type] || platformImgs.stone1
+    if(!img || !img.complete) return
+
+    const tileW = 16 * objScale
+    const tileH = (p.visualH ?? 472) * objScale
+
+    const tiles = Math.round((p.visualW + 26*objScale) / tileW)
+
+    const startY = Math.floor(p.y - 40*objScale - cameraY)
+
+    for(let i=0;i<tiles;i++){
+        let sx
+
+        if(i===0) sx = 0
+        else if(i===tiles-1) sx = 33
+        else sx = 17
+
+        ctx.drawImage(
+            img,
+            sx,40,16,(p.visualH ?? 472),
+            Math.floor(p.x - 6*objScale - cameraX) + i*tileW,
+            startY + 40*objScale,
+            tileW,
+            tileH
+        )
+    }
+}
+
+function drawWalkwayBottom(p){
+    const img = platformImgs[p.type] || platformImgs.stone1
+    if(!img || !img.complete) return
+
+    const tileW = 16*objScale
+    const tileH = p.h*objScale
+
+    const tiles = Math.round((p.visualW + 26*objScale) / tileW)
+
+    const startY = Math.floor(p.y - 40*objScale - cameraY)
+
+    for(let i=0;i<tiles;i++){
+        let sx
+
+        if(i===0) sx = 0
+        else if(i===tiles-1) sx = 33
+        else sx = 17
+
+        ctx.drawImage(
+            img,
+            sx,40,16, Math.floor(p.h/objScale),
+            Math.floor(p.x - 6*objScale - cameraX) + i*tileW,
+            startY + 40*objScale,
+            tileW,
+            p.h
+        )
+    }
+}
+
+function drawHouses(h) {
+  const theme = houseImgs.find(e => e.theme === h.theme).images
+
+  const tileW = 64 * eneScale
+  const tileH = 64 * eneScale
+
+  const floors = h.floors
+  const startX = Math.floor(h.x - cameraX)
+  const startY = Math.floor(h.y - cameraY - floors*tileH)
+
+  for (let i = 0; i < floors; i++) {
+    if(!h.color.get(i)) h.color.set(i,Math.floor(Math.random() * theme.length))
+    const img = theme[h.color.get(i) ?? 0]
+    if (!img || !img.complete) return
+
+    const y = startY + i * tileH
+
+    ctx.drawImage(
+      img,
+      startX,
+      y,
+      tileW,
+      tileH
+    )
+  }
+}
+
+function drawStartExit(){
+  const w = 64 * eneScale
+  const h = 128 * eneScale
+
+  ctx.drawImage(
+    startImg,
+    Math.floor(levelData.startPlat.x - cameraX),
+    Math.floor(levelData.startPlat.y - h - cameraY),
+    w,
+    h
+  )
+
+  ctx.drawImage(
+    exitImg,
+    Math.floor(levelData.exitPlat.x - cameraX),
+    Math.floor(levelData.exitPlat.y - h - cameraY),
+    w,
+    h
+  )
+}
+
+function drawEnemy(enemy,options={}) {
+    const size = 64
+    const isDead = enemy.state === "dead"
+    const isIdle = enemy.state === "idle"
+
+    const frames = 4
+    const frame = Math.floor(enemy.animFrame || 0) % frames
+    const animY = isDead ? 65 : isIdle ? 128 : 0
+
+    const drawSize = size * eneScale / 2
+    const drawX = (options.center!=="false"?enemy.x - cameraX + enemy.w / 2 - drawSize / 2:enemy.x - cameraX)+(options.offsetX??0)
+    const drawY = enemy.y + enemy.h - drawSize - cameraY
+    
+    const flipX=(enemyVel(enemy,"x",true)>0||enemy.flipped)?-1:1
+    const flipY=options.flipY>0?-1:1
+
+    ctx.save()
+
+    if (!isDead && (flipX<0||flipY<0)) {
+        ctx.translate(drawX+(flipX<0?drawSize:0), drawY+(flipY<0?drawSize:0))
+        ctx.scale(flipX, flipY)
+        ctx.drawImage(
+            enemy.img,
+            frame * size,
+            animY,
+            size,
+            size,
+            0,
+            0,
+            drawSize,
+            drawSize
+        )
+    } else {
+        ctx.drawImage(
+            enemy.img,
+            frame * size,
+            animY,
+            size,
+            size,
+            drawX,
+            drawY,
+            drawSize,
+            drawSize
+        )
+    }
+
+    ctx.restore()
+    
+    if(isDead&&options.deadFix!==false){
+       if(enemy.animFrame<4)enemy.animFrame+=0.15
+    } else enemy.animFrame+=0.15
+}
+
+function drawPlayer(player) {
+   const img = player.mode === "npc" && player.immortal ? playersImgs.npcPastel : playersImgs[player.mode] || playersImgs.npc
+    if(!img || !img.complete) return
+  
+    const size = 64
+    const frames = 4
+    const frame = Math.floor(player.animFrame || 0) % frames
+    
+    const isUsingAbility = player.state === "ability"
+    if(isUsingAbility&&player.animFrame>4){
+          idleTime = 0
+          player.state = "idle"
+    }
+    
+    const isIdle = player.state === "idle"
+    const isIdleLong = player.state === "idle_long"
+    const isWalking = player.state === "walking"
+    const isJumping = player.state === "jumping"
+    const isFalling = player.state === "falling"
+    const isDead = player.state === "dead"
+    const isComemorating = player.state === "comemorating"
+    
+    const animY = isIdle ? 0 : isIdleLong ? 64 : isWalking ? 128 : isJumping ? 192 : isFalling ? 256 : isDead ? 320  : isComemorating ? 384 : isUsingAbility ? 448 : 0
+
+    const drawSize = size * eneScale / 2
+    const drawX = player.x - cameraX + player.w / 2 - drawSize / 2.2
+    const drawY = player.y + player.h - drawSize - cameraY
+
+    ctx.save()
+
+    if (!isDead && flipPlayer) {
+        ctx.translate(drawX + drawSize, drawY)
+        ctx.scale(-1, 1)
+        ctx.drawImage(
+            img,
+            frame * size,
+            animY,
+            size,
+            size,
+            0,
+            0,
+            drawSize,
+            drawSize
+        )
+    } else {
+        ctx.drawImage(
+            img,
+            frame * size,
+            animY,
+            size,
+            size,
+            drawX,
+            drawY,
+            drawSize,
+            drawSize
+        )
+    }
+
+    ctx.restore()
+    
+    player.animFrame = (player.animFrame || 0) + (isWalking ? preservedVx*0.0375 : 0.15)
+    
+    const holdingImg = itemsImgs[player?.holding]??itemsImgs.none
+    const holdX = player.mode==="npc"||player.mode==="bigJeff"?drawX+12.5*eneScale:drawX
+    const holdY = player.mode==="npc"?drawY+12.5*eneScale:player.mode==="bigJeff"?drawY+10*eneScale:drawY
+    ctx.drawImage(
+            holdingImg,
+            0, 0, 16, 16,
+            holdX,
+            holdY,
+            16 * objScale,
+            16 * objScale
+        )
+}
+
+function drawPropGif(p){
+  const fw = 64
+  const fh = 128
+  const frames = 4
+
+  const drawW = Math.round(fw * (p.small ? propScale/2 : p.big ? propScale*2 : propScale))
+  const drawH = Math.round(fh * (p.small ? propScale/2 : p.big ? propScale*2 : propScale))
+
+  if (p.x - cameraX > c.width || p.x - cameraX + drawW < 0) return
+
+  if (typeof p.frame !== "number") p.frame = 0
+
+  const img = propsImgs[p.type]
+  if(!img || !img.complete) return
+
+  const frame = Math.floor(p.frame) % frames
+
+  const drawX = (p.x - cameraX) | 0
+  const drawY = (p.y - drawH - cameraY) | 0
+
+  ctx.drawImage(
+    img,
+    frame * fw,
+    0,
+    fw,
+    fh,
+    drawX,
+    drawY,
+    drawW,
+    drawH
+  )
+
+  p.frame += 0.1
+}
+
+function drawParticle(p) {
+  const fw = 16
+  const fh = 16
+  const frames = p.duration
+
+  const drawW = Math.round(fw * propScale)
+  const drawH = Math.round(fh * propScale)
+
+  if (p.x - cameraX > c.width || p.x - cameraX + drawW < 0) return
+
+  if (typeof p.frame !== "number") p.frame = 0
+
+  const img = particleImgs[p.type]
+  if(!img || !img.complete) return
+
+  const frame = Math.floor(p.frame) % frames
+
+  const drawX = (p.x - cameraX) | 0
+  const drawY = (p.y - drawH - cameraY) | 0
+
+  ctx.drawImage(
+    img,
+    0,
+    frame * fh,
+    fw,
+    fh,
+    drawX,
+    drawY,
+    drawW,
+    drawH
+  )
+
+  p.frame += 0.1
+  p.time += 0.1
+}
+
+function drawUi(){
+    
+    if(dialog.dialog){
+      const scene = dialogData[dialog.dialog]?.scenes[dialog.scene]
+     
+     ctx.strokeStyle = "#303447"
+     ctx.lineWidth = 2
+      
+     ctx.fillStyle = "#fff"
+     ctx.font = "8px 'Press Start 2P'"
+     ctx.textAlign = "center"
+     ctx.textBaseline = "middle"
+      
+     const dialogText = scene.text
+     const lines = wrapText(dialogText,200)
+     
+     const dx = c.width - 100
+     const dy = 450
+     
+     lines.forEach((line, i) => {
+          const y = dy - lines.length*10 + i*10
+          const gradient = ctx.createLinearGradient(0, y, 0, y + 16)
+
+         gradient.addColorStop(0, "#ffffff")
+         gradient.addColorStop(0.15, "#c3c8db")
+         gradient.addColorStop(0.5, "#898fab")
+         gradient.addColorStop(1, "#5d6380")
+
+         ctx.fillStyle = gradient
+
+         ctx.strokeText(line, dx, y)
+         ctx.fillText(line, dx, y)
+      })
+      
+      ctx.lineWidth = 1.5
+      const optionTexts = [
+         scene.options[dialog.option-1]?.text ?? "",
+         (scene.options[dialog.option]?.text ?? "")+(dialog.blinkFrame%16<8?" <":""),
+         scene.options[dialog.option+1]?.text ?? ""
+      ]
+      const start = optionTexts[0]?20:0
+      
+      ctx.textAlign = "left"
+      ctx.textBaseline = "middle"
+      ctx.font = "8px 'Press Start 2P'"
+      
+      optionTexts.forEach((line, i) => {
+          const y = dy+20*i+start
+          const gradient = ctx.createLinearGradient(0, y, 0, y + 16)
+
+         gradient.addColorStop(0, "#ffffff")
+         gradient.addColorStop(0.15, "#c3c8db")
+         gradient.addColorStop(0.5, "#898fab")
+         gradient.addColorStop(1, "#5d6380")
+
+         ctx.fillStyle = gradient
+
+         ctx.strokeText(line, dx-50, y)
+         ctx.fillText(line, dx-50, y)
+      })
+      dialog.blinkFrame++
+      ctx.shadowBlur = 0
+    }
+    
+    if(flags.battleArena&&flags.baRound){
+     ctx.fillStyle = "#fff"
+     ctx.font = "32px 'Press Start 2P'"
+     ctx.textAlign = "center"
+     ctx.textBaseline = "middle"
+     
+     const baRoundTxt = "Round "+flags.baRound
+     
+     const dx = c.width/2
+     const dy = 80
+     
+     const baRoundGradient = ctx.createLinearGradient(0, dy, 0, dy + 16)
+
+      baRoundGradient.addColorStop(0, "#ffffff")
+      baRoundGradient.addColorStop(0.15, "#c3c8db")
+      baRoundGradient.addColorStop(0.5, "#898fab")
+      baRoundGradient.addColorStop(1, "#5d6380")
+      
+      ctx.fillStyle = baRoundGradient
+      ctx.fillText(baRoundTxt, dx, dy)
+       
+       ctx.shadowBlur = 0
+    }
+    
+    
+    ctx.fillStyle = "#fff"
+    ctx.font = "20px Arial"
+    ctx.textAlign = "left"
+    ctx.textBaseline = "top"
+
+    const dx = c.width/2 - 195
+    const dy = c.height/2 - 340
+
+    const devTxtLines = String(devText).split("\n")
+
+    devTxtLines.forEach((line, i) => {
+        ctx.fillText(line, dx, dy + i * 10)
+    })
+    
+    ctx.drawImage(uiImages.pastel,0,0,16,16,300,10,32,32)
+    
+    ctx.strokeStyle = "#913c13"
+     ctx.lineWidth = 4
+      
+     ctx.fillStyle = "#fff"
+     ctx.font = "16px 'Press Start 2P'"
+     ctx.textAlign = "left"
+     ctx.textBaseline = "middle"
+     
+     const livesTxt = Math.min(lives,99)+`${Math.abs(lives)>99?"+":""}`
+     const livesTxtPos = { x:340, y:28 }
+     const livesTxtGra = ctx.createLinearGradient(0, livesTxtPos.y, 0, livesTxtPos.y + 16)
+
+     livesTxtGra.addColorStop(0, "#ffc38b")
+     livesTxtGra.addColorStop(0.15, "#f2a65e")
+     livesTxtGra.addColorStop(0.5, "#eb9346")
+     livesTxtGra.addColorStop(1, "#d46024")
+     ctx.fillStyle = livesTxtGra
+
+     ctx.strokeText(livesTxt, livesTxtPos.x, livesTxtPos.y)
+     ctx.fillText(livesTxt, livesTxtPos.x, livesTxtPos.y)
+     
+     ctx.drawImage(uiImages.coin,0,0,16,16,10,10,32,32)
+    
+    ctx.strokeStyle = "#5c0303"
+     ctx.lineWidth = 4
+      
+     ctx.fillStyle = "#fff"
+     ctx.textAlign = "left"
+     ctx.textBaseline = "middle"
+     
+     const coinTxt = clamp(-999,999,coins)+`${Math.abs(coins)>999?"+":""}`
+     const coinTxtPos = { x:48, y:28 }
+     const coinTxtGra = ctx.createLinearGradient(0, coinTxtPos.y, 0, coinTxtPos.y + 16)
+
+     coinTxtGra.addColorStop(0, "#fc72a0")
+     coinTxtGra.addColorStop(0.15, "#db2c58")
+     coinTxtGra.addColorStop(0.5, "#ba1334")
+     coinTxtGra.addColorStop(1, "#9c0303")
+     ctx.fillStyle = coinTxtGra
+
+     ctx.strokeText(coinTxt, coinTxtPos.x, coinTxtPos.y)
+     ctx.fillText(coinTxt, coinTxtPos.x, coinTxtPos.y)
+     
+     ctx.strokeStyle = "#3B3F63"
+     ctx.lineWidth = 4
+     
+     ctx.fillStyle = "#fff"
+     ctx.font = "64px 'Press Start 2P'"
+     ctx.textAlign = "center"
+     
+     const invSquare = { text: levels.levels[level].lockInventory?"▣":"□", pos:{x:c.width/2,y:28} }
+     const invGra = ctx.createLinearGradient(0, invSquare.pos.y, 0, invSquare.pos.y + 16)
+     
+     invGra.addColorStop(0, "#E3FEFF")
+     invGra.addColorStop(0.15, "#A5CAD4")
+     invGra.addColorStop(0.5, "#728DA3")
+     invGra.addColorStop(1, "#4F5D7D")
+     ctx.fillStyle = invGra
+     
+     if(inventory){
+          const invImg=inventory==="burguer"?powerupsImages.burguer:powerupsImages.pastel
+          ctx.drawImage(invImg,0,0,16,16, invSquare.pos.x-16, invSquare.pos.y-8,32,32)
+     }
+    
+     ctx.strokeText(invSquare.text, invSquare.pos.x, invSquare.pos.y)
+     ctx.fillText(invSquare.text, invSquare.pos.x, invSquare.pos.y)
+}
+
+    
+    
+function draw(){
+  if (state === "startScreen"|| state === "map") return
+  ctx.clearRect(0,0,c.width,c.height)
+
+const bgW = 128 * scale
+const bgH = 512 * scale
+
+const bgOffsetX = Math.floor(-(cameraX * 0.5) % bgW)
+const bgOffsetY = Math.floor(-(cameraY * 0.5))
+
+ctx.drawImage(skyImg,0,0,bgW,bgH)
+
+for (let x = bgOffsetX; x < c.width; x += bgW) {
+    ctx.drawImage(bgImg, x, bgOffsetY, bgW, bgH)
+}
+
+if(levelData.water){
+  const waterX = (Math.floor(player.x/(16*objScale))*16-((gameTime*16*(levelData.water.flow??1)/45)%16))*objScale-500*objScale
+  drawPlatform({ type:levelData.water.type, visualW:1000*objScale, y:levelData.water.y, x:waterX })
+}
+
+platforms.forEach(p => {
+if(!isOnScreen(p,100)) return
+drawPlatform(p)
+})
+
+walkways.forEach(p => {
+if(!isOnScreen(p,100)) return
+
+drawPlatform(p)
+})
+
+props.forEach(p=>{
+  if (!p.onTopPlatform || p.front) return
+  const tileW = 64 * (p.small ? propScale/2 : p.big ? propScale*2 : propScale)
+  const tileH = 128 * (p.small ? propScale/2 : p.big ? propScale*2 : propScale)
+
+  const bounds = {
+    x:p.x,
+    y:p.y - tileH,
+    w:tileW,
+    h:tileH
+  }
+
+  if(!isOnScreen(bounds,100)) return
+
+  if(!p.gif){
+    const img = propsImgs[p.type] || propsImgs.none
+    if(!img || !img.complete) return
+
+    const drawX = Math.floor((p.x - cameraX) | 0)
+    const drawY = Math.floor((p.y - tileH - cameraY) | 0)
+
+     ctx.drawImage(img, 0, 0, 64, 128, drawX, drawY, tileW, tileH)
+  }
+  else drawPropGif(p)
+
+})
+
+topPlatforms.forEach(p => {
+if(!isOnScreen(p,100)) return
+
+drawPlatform(p)
+})
+
+if (player.onTopPlatform&&!player.onStackablePlatform) drawPlayer(player)
+
+topPlatforms.forEach(p => {
+if(!p.alwaysLoad&&!isOnScreen(p,100)) return
+drawPlatformBottom(p)
+})
+
+props.forEach(p=>{
+  if (p.onTopPlatform || p.front) return
+  const tileW = 64 * (p.small ? propScale/2 : p.big ? propScale*2 : propScale)
+  const tileH = 128 * (p.small ? propScale/2 : p.big ? propScale*2 : propScale)
+
+  const bounds = {
+    x:p.x,
+    y:p.y - tileH,
+    w:tileW,
+    h:tileH
+  }
+
+  if(!isOnScreen(bounds,50)) return
+
+  if(!p.gif){
+    const img = propsImgs[p.type] || propsImgs.none
+    if(!img || !img.complete) return
+
+    const drawX = Math.floor((p.x - cameraX) | 0)
+    const drawY = Math.floor((p.y - tileH - cameraY) | 0)
+
+     ctx.drawImage(img, 0, 0, 64, 128, drawX, drawY, tileW, tileH)
+  }
+  else drawPropGif(p)
+
+})
+
+drawStartExit()
+
+powerups.forEach(p => {
+    ctx.drawImage(
+            powerupsImages[p.type],
+            0, 0, 16, 16,
+            p.x - cameraX,
+            p.y - cameraY,
+            (16 * objScale),
+            (16 * objScale)
+        )
+})
+
+pasteis.forEach(p => {
+    ctx.drawImage(
+            powerupsImages.pastel,
+            0, 0, 16, 16,
+            p.x - cameraX,
+            p.y - cameraY,
+            (16 * objScale),
+            (16 * objScale)
+        )
+})
+
+if(!tomatoes[level]){
+    ctx.drawImage( 
+       powerupsImages.tomato,
+       0, 0, 16, 16,
+       tomato?.x - cameraX,
+       tomato?.y - cameraY,
+       (16 * objScale),
+       (16 * objScale),
+    )
+}
+
+enemiesPexeira.forEach(enemy => {
+  if (enemy.state === "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesTongoloide.forEach(enemy => {
+  if (enemy.state === "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesFeixe.forEach(enemy => {
+  if (enemy.state === "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesRosal.forEach(enemy => {
+  if (enemy.state === "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesMamute.forEach(enemy => {
+  if (!isOnScreen(enemy, 50)) return
+  drawEnemy(enemy,{center:false,offsetX:-6,deadFix:false})
+})
+
+if (!player.onTopPlatform||player.onStackablePlatform) drawPlayer(player)
+
+items.forEach(item => {
+    const img = itemsImgs[item.type]??itemsImgs.pastel
+    ctx.drawImage(
+            img,
+            0, 0, 16, 16,
+            item.x - cameraX,
+            item.y - cameraY,
+            (16 * objScale),
+            (16 * objScale)
+        )
+})
+
+ctx.fillStyle="yellow"
+bullets.forEach(b=>{
+  if(!isOnScreen(b,20)) return
+  ctx.fillRect(b.x-cameraX,b.y-cameraY,b.w,b.h)
+})
+
+houses.forEach(h=>{
+   drawHouses(h)
+})
+
+platforms.forEach(p=>{
+  if(!p.alwaysLoad&&!isOnScreen(p,100)) return
+  drawPlatformBottom(p)
+})
+
+walkways.forEach(p=>{
+  if(!p.alwaysLoad&&!isOnScreen(p,100)) return
+  drawWalkwayBottom(p)
+})
+
+if(isOnScreen(checkpoint,200) && checkpointImg.complete) {
+
+  const checkpointTileW = 64 * checkpointScale
+  const checkpointTileH = 64 * checkpointScale
+
+    const checkpointDrawX = (checkpoint.x - 8*checkpointScale - cameraX) | 0
+    const checkpointDrawY = ((checkpoint.y + checkpoint.h)  - checkpointTileH - cameraY) | 0
+
+     ctx.drawImage(checkpointImg, 0, 0, 64, 64, checkpointDrawX, checkpointDrawY, checkpointTileW, checkpointTileH)
+}
+
+props.forEach(p=>{
+  if (!p.front) return
+  const tileW = 64 * (p.small ? propScale/2 : p.big ? propScale*2 : propScale)
+  const tileH = 128 * (p.small ? propScale/2 : p.big ? propScale*2 : propScale)
+
+  const bounds = {
+    x:p.x,
+    y:p.y - tileH,
+    w:tileW,
+    h:tileH
+  }
+
+  if(!isOnScreen(bounds,50)) return
+
+  if(!p.gif){
+    const img = propsImgs[p.type] || propsImgs.none
+    if(!img || !img.complete) return
+
+    const drawX = Math.floor((p.x - cameraX) | 0)
+    const drawY = Math.floor((p.y - tileH - cameraY) | 0)
+
+     ctx.drawImage(img, 0, 0, 64, 128, drawX, drawY, tileW, tileH)
+  }
+  else drawPropGif(p)
+
+})
+
+enemiesSnerm.forEach(enemy => {
+  if (enemy.state === "dead" || !isOnScreen(enemy, 50)) return
+  const s=Math.sin(gameTime*enemy.vy/10)
+  const offsetY=Math.sign(s)*Math.pow(Math.abs(s),0.75)*enemy.ampl
+  const flipY=offsetY<enemy.lastOffsetY?-1:1
+  enemy.lastOffsetY=offsetY
+  drawEnemy(enemy,{flipY})
+})
+
+if(levelData?.water?.y){
+	let waterY=(levelData.water.y-cameraY+4)||0
+	let t=performance.now()*0.003
+	ctx.filter="blur(1px)"
+	for(let y=waterY;y<c.height;y+=8){
+		let offset=Math.sin(y*0.08+t)*3
+		ctx.drawImage(
+			c,
+			0,y,
+			c.width,8,
+			offset,y,
+			c.width,8
+		)
+	}
+	
+	const waterX = (Math.floor(player.x/(16*objScale))*16-((gameTime*16*levelData.water.flow/45)%16))*objScale-500*objScale
+	drawPlatformBottom({ type:levelData.water.type, visualW:1000*objScale, y:levelData.water.y+4, x:waterX })
+	ctx.filter="none"
+}
+
+enemiesPexeira.forEach(enemy => {
+  if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesTongoloide.forEach(enemy => {
+  if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesFeixe.forEach(enemy => {
+  if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesSnerm.forEach(enemy => {
+  if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+enemiesRosal.forEach(enemy => {
+  if (enemy.state !== "dead" || !isOnScreen(enemy, 50)) return
+  drawEnemy(enemy)
+})
+
+particles.forEach(p=>{
+  drawParticle(p)
+})
+
+  ctx.fillStyle = "#fff"
+  ctx.font = "38px Arial"
+
+  ctx.textAlign = "left"
+  ctx.textBaseline = "bottom"
+  
+ const levelFilter = levelData.filter
+  if (levelFilter) {
+     ctx.save()
+     ctx.globalCompositeOperation="multiply"
+     ctx.fillStyle = `rgba(${levelFilter.r}, ${levelFilter.g}, ${levelFilter.b}, ${levelFilter.a})`
+     ctx.fillRect(0,0,c.width,c.height)
+     ctx.restore()
+  }
+
+  lights.forEach(l => {
+      const grandient = ctx.createRadialGradient(
+         l.x-cameraX,l.y-cameraY,0,
+         l.x-cameraX,l.y-cameraY,l.radius,
+       )
+       
+       grandient.addColorStop(0, `rgba(${ l.r+","+l.g+","+l.b+","+l.a })`)
+       grandient.addColorStop(1, "rgba(255,255,255,0)")
+       
+       ctx.fillStyle = grandient
+       
+       ctx.beginPath()
+       ctx.arc(l.x-cameraX,l.y-cameraY,l.radius,0,Math.PI * 2)
+       ctx.fill()
+  })
+  
+  drawUi()
+  
+  if (fadeAlpha > 0) {
+     ctx.fillStyle = `rgba(0,0,0,${fadeAlpha})`
+     ctx.fillRect(0,0,c.width,c.height)
+  }
+}
+
+function loading() {
+    stopSounds()
+    state = "loading"
+    ctx.clearRect(0,0,c.width,c.height)
+
+    ctx.fillStyle = "#000"
+    ctx.fillRect(0, 0, c.width, c.height)
+
+    ctx.fillStyle = "#fff"
+    ctx.font = "16px 'Press Start 2P'"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+
+    const dx = c.width / 2
+    const dy = c.height / 2
+
+    ctx.fillText("Loading...", dx, dy - 10)
+    
+    ctx.font = "8px 'Press Start 2P'"
+    ctx.fillText(`${Math.floor(loaded/totalAssets*100)/100}% loaded`, dx, dy + 20)
+}
+
+function startScreen() {
+    stopSounds()
+    state = "startScreen"
+
+    ctx.fillStyle = "#000"
+    ctx.fillRect(0, 0, c.width, c.height)
+
+    ctx.fillStyle = "#fff"
+    ctx.font = "16px 'Press Start 2P'"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+
+    const dx = c.width / 2
+    const dy = c.height / 2
+
+    ctx.fillText("Press any key", dx, dy - 10)
+    ctx.fillText("to start...", dx, dy + 10)
+}
+
+function gameover() {
+    stopSounds()
+    state = "gameover"
+
+    ctx.fillStyle = "#000"
+    ctx.fillRect(0, 0, c.width, c.height)
+
+    ctx.fillStyle = "#fff"
+    ctx.font = "16px 'Press Start 2P'"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+
+    const dx = c.width / 2
+    const dy = c.height / 2
+
+    ctx.fillText("GAMEOVER!!", dx, dy - 50)
+    ctx.fillText("you lost...", dx, dy + 10)
+    ctx.fillText("press to restart!", dx, dy + 30)
+}
+
+function demoFinished() {
+    stopSounds()
+    state = "demo"
+
+    ctx.fillStyle = "#000"
+    ctx.fillRect(0, 0, c.width, c.height)
+
+    ctx.fillStyle = "#fff"
+    ctx.font = "38px Arial"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+
+    const dx = c.width / 2
+    const dy = c.height / 2
+
+    ctx.fillText("Parabéns!!", dx, dy - 30)
+    ctx.fillText("Você finalizou a demo :)", dx, dy + 30)
+    ctx.fillText("Reinicie se quiser jogar de novo..", dx, dy + 60)
+}
+
+// map
+
+const mapData = {
+    points:{
+       0:{ warp:"level", id: 1, minLevel: 1, x: 2, y: 268 },
+       1:{ warp:"store", id: 0, minLevel: 2, x: 20, y: 138 },
+       2:{ warp:"level", id: 2, minLevel: 2, x: 86, y: 140 },
+       3:{ warp:"level", id: 3, minLevel: 3, x: 358, y: 312 },
+       4:{ warp:"store", id: 1, minLevel: 4, x: 254, y: 398 },
+       5:{ warp:"level", id: 4, minLevel: 4, x: 356, y: 534 },
+       6:{ warp:"store", id: 2, minLevel: 5, x: 168, y: 532 },
+       7:{ warp:"level", id: 5, minLevel: 5, x: 150, y: 610 },
+       8:{ warp:"level", id: 6, minLevel: 6, x: 0, y: 498 },
+       9:{ warp:"store", id: 3, minLevel: 7, x: 40, y: 402 },
+       10:{ warp:"level", id: 6, minLevel: 7, x: 232, y: 360 }
+    },
+    connections:{
+       0:{ up:1, right:1, down:9 },
+       1:{ right:2, down:0 },
+       2:{ left:1, right:3, down:0 },
+       3:{ up:2, left:4, down:5 },
+       4:{ up:3, right:3, down:5, left:10 },
+       5:{ up:3, left:6 },
+       6:{ right:5, down:7 },
+       7:{ left:8, up:6, right:6 },
+       8:{ right:7, down:7, up:9 },
+       9:{ down:8, up:0, right:10 },
+       10:{ left:9, right:4, down:4 }
+    }
+}
+
+let selector = {
+    mapId: 0,
+    movingId: 0,
+    warp: "level",
+    id: 0,
+    x: 2,
+    y: 268,
+    anim: 1,
+    flipped: false,
+    moving: false,
+    warping: false
+}
+let selectTitle = levels.levels[level].title
+
+function worldMap(){
+    if(state!=="map")return
+    
+    checkCodes()
+    ctx.clearRect(0,0,c.width,c.height)
+    
+    const mapImg = mapImgs[world]
+    if(!mapImg)return
+    
+    
+    if(selector.moving){
+       const movingPoint = mapData.points[selector.movingId]
+       
+       if(movingPoint.warp==="level"&&level!==movingPoint.id){
+          loadLevel(movingPoint.id)
+          level = movingPoint.id
+       }
+       else if(movingPoint.warp==="store"){
+          levelData = stores[movingPoint.id]?.data
+          level = 0
+       }
+       
+       if(selector.x===movingPoint.x && selector.y===movingPoint.y){
+          selector.moving = false
+          selector.mapId = selector.movingId
+          selector.warp = movingPoint.warp
+          selector.id = movingPoint.id
+          if(selector.warp==="level")selectTitle=levels.levels[level].title
+          else if(selector.warp==="store")selectTitle=stores[selector.id].name
+       } else {
+          selector.x = lerp(selector.x, movingPoint.x, 8, 0.25)
+          selector.y = lerp(selector.y, movingPoint.y, 8, 0.25)
+          selectTitle=""
+       }
+    } else {
+       
+       if(keys.jump&&!selector.warping){
+           selector.warping=true
+           startFade(1, () => {
+              selector.warping=false
+               state = "game"
+               musics.groovyGngJourney.pause()
+               resetLevel()
+               startFade(-1)
+           })
+       }
+       
+       const connections = mapData.connections[selector.mapId]
+       if(!selector.warping && keys.right && connections.right!==undefined){
+           if(mapData.points[connections.right].minLevel<=maxActualLevel){
+              selector.moving = true
+              selector.movingId = connections.right
+              const movingPoint = mapData.points[connections.right]
+               if(selector.x>movingPoint.x)selector.flipped=true
+              else selector.flipped=false
+           }
+          
+       } else if(!selector.warping && keys.left && connections.left!==undefined){
+           if(mapData.points[connections.left].minLevel<=maxActualLevel){
+              selector.moving = true
+              selector.movingId = connections.left
+              const movingPoint = mapData.points[connections.left]
+               if(selector.x>movingPoint.x)selector.flipped=true
+              else selector.flipped=false
+           }
+       } else if(keys.up && connections.up!==undefined){
+           if(mapData.points[connections.up].minLevel<=maxActualLevel){
+              selector.moving = true
+              selector.movingId = connections.up
+              const movingPoint = mapData.points[connections.up]
+               if(selector.x>movingPoint.x)selector.flipped=true
+              else selector.flipped=false
+           }
+       } else if(keys.down && connections.down!==undefined){
+           if(mapData.points[connections.down].minLevel<=maxActualLevel){
+              selector.moving = true
+              selector.movingId = connections.down
+              const movingPoint = mapData.points[connections.down]
+               if(selector.x>movingPoint.x)selector.flipped=true
+              else selector.flipped=false
+           }
+       }
+    }
+    
+    ctx.drawImage(
+          mapImg,
+          0,0,390,670,
+          0, 0, 390, 670
+     )
+     
+     selector.anim += 0.15
+     const frame = Math.floor(selector.anim)%2
+     
+     ctx.save()
+     
+    if(selector.flipped){
+       
+        
+        ctx.translate(selector.x + 20, selector.y)
+        ctx.scale(-1, 1)
+        
+        ctx.drawImage(
+           playersImgs.selector,
+           20*frame, 0, 20, 20,
+           0, 0, 20, 20
+        )
+     }
+     else ctx.drawImage(
+         playersImgs.selector,
+         20*frame, 0, 20, 20,
+         selector.x, selector.y, 20, 20
+     )
+     
+     ctx.restore()
+     
+     ctx.strokeStyle = "#c49118"
+     ctx.lineWidth = 3
+     ctx.font = "16px 'Press Start 2P'"
+     ctx.textAlign = "center"
+     ctx.textBaseline = "top"
+
+     const dx = c.width/2
+     const dy = c.height/2 - 320
+
+     const lines = selectTitle.split("\n")
+
+     lines.forEach((line, i) => {
+         const y = dy + i * 10
+
+         const gradient = ctx.createLinearGradient(0, y, 0, y + 16)
+
+         gradient.addColorStop(0, "#ffffff")
+         gradient.addColorStop(0.15, "#fff6a0")
+         gradient.addColorStop(0.5, "#ffe32e")
+         gradient.addColorStop(1, "#c49118")
+
+         ctx.fillStyle = gradient
+
+         ctx.strokeText(line, dx, y)
+         ctx.fillText(line, dx, y)
+     })
+     
+     ctx.shadowBlur = 0
+     
+     if (fadeDirection !== 0) {
+       fadeAlpha += fadeSpeed * fadeDirection
+
+       if (fadeAlpha >= 1) {
+         fadeAlpha = 1
+         fadeDirection = 0
+         if (fadeCallback) fadeCallback()
+       }
+
+       if (fadeAlpha <= 0) {
+         fadeAlpha = 0
+         fadeDirection = 0
+      }
+    }
+     
+     if (fadeAlpha > 0) {
+       ctx.fillStyle = `rgba(0,0,0,${fadeAlpha})`
+       ctx.fillRect(0,0,c.width,c.height)
+    }
+}
+
+// loop
+
+let lastTime = 0
+const frameTime = 1000/45
+
+function loop(time){
+    if(state==="gameover"||state==="startScreen"){
+        if(state==="gameover")gameover()
+        else startScreen()
+        lastTime = 0
+        return
+    }
+    
+    if(!lastTime) lastTime = time
+    const delta = time - lastTime
+
+    if(delta >= frameTime){
+        lastTime = time
+        
+        if(state === "map"){
+            worldMap()
+        }
+
+        if(state !== "paused" && state !== "startScreen" && state !== "demo" && state !== "map"){
+            update()
+            draw()
+        }
+    }
+
+    requestAnimationFrame(loop)
+}
+if(!loaded)loading()
+
+</script>
+</body>
+</html>
